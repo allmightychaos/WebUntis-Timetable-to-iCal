@@ -6,7 +6,6 @@ const { login } = require('./core/auth.js');
 const { fetchTimetableData } = require('./core/fetchData.js');
 const { processTimetableData, groupAndSortTimetable, insertFreePeriods } = require('./core/processData.js');
 
-dotenv.config();
 const [domain, school, username, password] = [
     process.env.WEBUNTIS_DOMAIN,
     process.env.WEBUNTIS_SCHOOL,
@@ -14,7 +13,7 @@ const [domain, school, username, password] = [
     process.env.WEBUNTIS_PASSWORD
 ];
 
-async function processData() {
+async function processData(startDate) {
     const loginData = await login(domain, school, username, password);
     if (!loginData) {
         console.error('Login failed');
@@ -22,15 +21,13 @@ async function processData() {
     }
 
     const { sessionId, personId, personType } = loginData;
-    const today = new Date().toISOString().slice(0, 10);
-    const timetableData = await fetchTimetableData(sessionId, personType, personId, today);
+    const timetableData = await fetchTimetableData(sessionId, personType, personId, startDate);
 
     if (!timetableData) {
         console.error('Failed to fetch timetable data');
         return null;
     }
 
-    // Process and filter elements without saving to intermediate files
     const elements = timetableData.elements;
     const filteredData = {
         classes: elements.filter(item => item.type === 1),
@@ -42,9 +39,9 @@ async function processData() {
     return { filteredData, dataElementPeriods: timetableData.elementPeriods[personId] };
 }
 
-async function run() {
+async function run(startDate) {
     try {
-        const result = await processData();
+        const result = await processData(startDate);
         if (!result) {
             console.error('Failed to process data');
             return null;
@@ -68,5 +65,4 @@ async function run() {
     }
 }
 
-// Export run function for use in the Netlify function
 module.exports = { run };
