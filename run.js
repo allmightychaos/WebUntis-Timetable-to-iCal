@@ -46,25 +46,26 @@ async function run() {
         const result = await processData();
         if (!result) {
             console.error('Failed to process data');
-            return;
+            return null;
         }
 
         const { filteredData, dataElementPeriods } = result;
 
         if (!dataElementPeriods || !Array.isArray(dataElementPeriods)) {
             console.error('dataElementPeriods is not valid:', dataElementPeriods);
-            return;
+            return null;
         }
 
         const processedData = await processTimetableData(dataElementPeriods, filteredData);
         const groupedAndSortedTimetable = groupAndSortTimetable(processedData);
         const finalTimetable = insertFreePeriods(groupedAndSortedTimetable);
 
-        // Save the final timetable to a file
-        await saveToFile('timetable.json', finalTimetable);
+        return finalTimetable;
     } catch (error) {
         console.error('An unexpected error occurred:', error);
+        return null;
     }
 }
 
-run();
+// Export run function for use in the Netlify function
+module.exports = { run };
