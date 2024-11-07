@@ -1,36 +1,36 @@
-// netlify/functions/generateTimetableIcal.js
 const ical = require('ical-generator').default || require('ical-generator');
 const { parse } = require('date-fns');
+const { zonedTimeToUtc } = require('date-fns-tz');
 const { run } = require('../../run.js');
+
+const CEST_TIMEZONE = 'Europe/Berlin'; // Central European Summer Time
 
 export async function handler(event, context) {
     try {
-        // Call the run function to get finalTimetable
         const finalTimetable = await run();
-        
         if (!finalTimetable) {
             return { statusCode: 500, body: 'Failed to generate timetable' };
         }
 
-        // Create a new iCal calendar
         const calendar = ical({ name: 'School Timetable' });
 
-        // Populate calendar with events from finalTimetable
         Object.values(finalTimetable).forEach(day => {
             day.forEach(event => {
                 if (event.cellState !== "CANCEL" && !event.isFreePeriod) {
+                    const start = zonedTimeToUtc(`${event.date} ${event.startTime}`, CEST_TIMEZONE);
+                    const end = zonedTimeToUtc(`${event.date} ${event.endTime}`, CEST_TIMEZONE);
+
                     calendar.createEvent({
-                        start: parse(`${event.date} ${event.startTime}`, 'dd.MM.yyyy HH:mm', new Date()),
-                        end: parse(`${event.date} ${event.endTime}`, 'dd.MM.yyyy HH:mm', new Date()),
+                        start,
+                        end,
                         summary: event.subject_short,
                         description: `${event.subject_long}, Room: ${event.room}, Teacher: ${event.teacherName}`,
-                        color: event.color || undefined,  // Only include color if it's supported
+                        color: event.color || undefined,
                     });
                 }
             });
         });
 
-        // Return the generated iCal file as a response
         return {
             statusCode: 200,
             headers: {
