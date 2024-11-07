@@ -1,6 +1,6 @@
 // src/core/fetchData.js
-import axios from 'axios';
-import dotenv from 'dotenv';
+const axios = require('axios');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const domain = process.env.WEBUNTIS_DOMAIN;

@@ -1,5 +1,5 @@
 // src/core/auth.js
-import axios from 'axios';
+const axios = require('axios');
 
 async function login(domain, school, username, password) {
       try {

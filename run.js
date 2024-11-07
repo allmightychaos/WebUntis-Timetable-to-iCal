@@ -1,9 +1,10 @@
 // src/run.js
-import dotenv from 'dotenv';
-import { login } from './core/auth.js';
-import { fetchTimetableData } from './core/fetchData.js';
-import { processTimetableData, groupAndSortTimetable, insertFreePeriods } from './core/processData.js';
-import { saveToFile } from './core/save.js';
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { login } = require('./core/auth.js');
+const { fetchTimetableData } = require('./core/fetchData.js');
+const { processTimetableData, groupAndSortTimetable, insertFreePeriods } = require('./core/processData.js');
 
 dotenv.config();
 const [domain, school, username, password] = [

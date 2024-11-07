@@ -1,7 +1,7 @@
 // netlify/functions/generateTimetableIcal.js
-import ical from 'ical-generator';
-import { parse } from 'date-fns';
-import { run } from '../../run.js';
+const ical = require('ical-generator').default || require('ical-generator');
+const { parse } = require('date-fns');
+const { run } = require('../../run.js');
 
 export async function handler(event, context) {
     try {

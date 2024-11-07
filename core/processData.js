@@ -1,6 +1,5 @@
 // src/core/processData.js
-import { createElementMap, formatDate, formatTime, capitalizeFirstLetter, getColorByCellState } from './utils.js';
-
+const { createElementMap, formatDate, formatTime, capitalizeFirstLetter, getColorByCellState } = require('./utils.js');
 
 async function processTimetableData(dataElementPeriods, filteredData) {
       const { teachers, lessons, rooms } = filteredData;

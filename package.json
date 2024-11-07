@@ -17,5 +17,8 @@
     "ical-generator": "^8.0.1",
     "path": "^0.12.7",
     "url": "^0.11.4"
+  },
+  "devDependencies": {
+    "netlify-lambda": "^2.0.16"
   }
 }
