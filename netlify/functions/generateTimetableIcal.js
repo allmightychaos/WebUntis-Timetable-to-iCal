@@ -1,25 +1,18 @@
 const ical = require('ical-generator').default || require('ical-generator');
-const { add, format } = require('date-fns');
+const { add, format, addDays, isBefore } = require('date-fns');
 const { zonedTimeToUtc } = require('date-fns-tz');
 const { run } = require('../../run.js');
 
-const CEST_TIMEZONE = 'Europe/Berlin';
+const CEST_TIMEZONE = 'Europe/Vienna';
 
 export async function handler(event, context) {
     try {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const nextWeek = format(add(new Date(), { weeks: 1 }), 'yyyy-MM-dd');
+        const calendar = ical({ name: 'Stundenplan' });
+        const startDate = new Date(); // Start from today's date
+        const endDate = add(startDate, { years: 1 }); // Until one year from today
+        let currentDate = startDate;
 
-        // Get timetables for this week and next week
-        const timetableThisWeek = await run(today);
-        const timetableNextWeek = await run(nextWeek);
-
-        if (!timetableThisWeek && !timetableNextWeek) {
-            return { statusCode: 500, body: 'Failed to generate timetable' };
-        }
-
-        const calendar = ical({ name: 'School Timetable' });
-
+        // Function to add events from a specific week's timetable
         const addEventsToCalendar = (timetable) => {
             Object.values(timetable).forEach(day => {
                 day.forEach(event => {
@@ -33,15 +26,29 @@ export async function handler(event, context) {
                             summary: event.subject_short,
                             description: `${event.subject_long}, Room: ${event.room}, Teacher: ${event.teacherName}`,
                             color: event.color || undefined,
+                            timezone: CEST_TIMEZONE,
                         });
                     }
                 });
             });
         };
 
-        // Add events from both weeks
-        if (timetableThisWeek) addEventsToCalendar(timetableThisWeek);
-        if (timetableNextWeek) addEventsToCalendar(timetableNextWeek);
+        // Loop through each day for the next year and fetch timetables
+        while (isBefore(currentDate, endDate)) {
+            const formattedDate = format(currentDate, 'yyyy-MM-dd');
+            const nextWeekDate = format(add(currentDate, { weeks: 1 }), 'yyyy-MM-dd');
+
+            // Fetch timetable data for current day and the next week
+            const timetableThisWeek = await run(formattedDate);
+            const timetableNextWeek = await run(nextWeekDate);
+
+            // Add events to the calendar if data is available
+            if (timetableThisWeek) addEventsToCalendar(timetableThisWeek);
+            if (timetableNextWeek) addEventsToCalendar(timetableNextWeek);
+
+            // Move to the next day
+            currentDate = addDays(currentDate, 1);
+        }
 
         return {
             statusCode: 200,
