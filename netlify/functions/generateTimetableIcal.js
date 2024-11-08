@@ -1,6 +1,5 @@
 const ical = require('ical-generator').default || require('ical-generator');
-const { add, format, addDays, isBefore } = require('date-fns');
-const { zonedTimeToUtc } = require('date-fns-tz');
+const { add, format } = require('date-fns');
 const { run } = require('../../run.js');
 
 const CEST_TIMEZONE = 'Europe/Vienna';
@@ -8,17 +7,24 @@ const CEST_TIMEZONE = 'Europe/Vienna';
 export async function handler(event, context) {
     try {
         const calendar = ical({ name: 'Stundenplan' });
-        const startDate = new Date(); // Start from today's date
-        const endDate = add(startDate, { years: 1 }); // Until one year from today
-        let currentDate = startDate;
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const nextWeek = format(add(new Date(), { weeks: 1 }), 'yyyy-MM-dd');
+
+        // Fetch timetable data for this week and next week
+        const timetableThisWeek = await run(today);
+        const timetableNextWeek = await run(nextWeek);
 
         // Function to add events from a specific week's timetable
         const addEventsToCalendar = (timetable) => {
             Object.values(timetable).forEach(day => {
                 day.forEach(event => {
                     if (event.cellState !== "CANCEL" && !event.isFreePeriod) {
-                        const start = zonedTimeToUtc(`${event.date} ${event.startTime}`, CEST_TIMEZONE);
-                        const end = zonedTimeToUtc(`${event.date} ${event.endTime}`, CEST_TIMEZONE);
+                        const [day, month, year] = event.date.split('.');
+                        const [startHour, startMinute] = event.startTime.split(':');
+                        const [endHour, endMinute] = event.endTime.split(':');
+
+                        const start = new Date(year, month - 1, day, startHour, startMinute);
+                        const end = new Date(year, month - 1, day, endHour, endMinute);
 
                         calendar.createEvent({
                             start,
@@ -33,22 +39,9 @@ export async function handler(event, context) {
             });
         };
 
-        // Loop through each day for the next year and fetch timetables
-        while (isBefore(currentDate, endDate)) {
-            const formattedDate = format(currentDate, 'yyyy-MM-dd');
-            const nextWeekDate = format(add(currentDate, { weeks: 1 }), 'yyyy-MM-dd');
-
-            // Fetch timetable data for current day and the next week
-            const timetableThisWeek = await run(formattedDate);
-            const timetableNextWeek = await run(nextWeekDate);
-
-            // Add events to the calendar if data is available
-            if (timetableThisWeek) addEventsToCalendar(timetableThisWeek);
-            if (timetableNextWeek) addEventsToCalendar(timetableNextWeek);
-
-            // Move to the next day
-            currentDate = addDays(currentDate, 1);
-        }
+        // Add events from this week and next week
+        if (timetableThisWeek) addEventsToCalendar(timetableThisWeek);
+        if (timetableNextWeek) addEventsToCalendar(timetableNextWeek);
 
         return {
             statusCode: 200,
@@ -59,6 +52,10 @@ export async function handler(event, context) {
             body: calendar.toString(),
         };
     } catch (error) {
-        return { statusCode: 500, body: JSON.stringify(error.message) };
+        console.error("Error generating iCal file:", error);
+        return {
+            statusCode: 500,
+            body: "Internal Server Error",
+        };
     }
 }
