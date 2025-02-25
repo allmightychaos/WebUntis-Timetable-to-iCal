@@ -1,4 +1,4 @@
-# WebUntis-Timetable-to-iCal
+# TiCal, aka. WebUntis-Timetable-to-iCal
 
 This project fetches timetable data via the WebUntis API, processes the information, and generates an iCal file that can be used in your calendar application.
 The project includes Netlify for hosting purposes as well. 
