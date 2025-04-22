@@ -38,4 +38,10 @@ function getColorByCellState(cellState) {
       return colors[cellState] || null;
 }
 
-export { createElementMap, formatTime, formatDate, capitalizeFirstLetter, getColorByCellState };
+module.exports = {
+      createElementMap,
+      formatTime,
+      formatDate,
+      capitalizeFirstLetter,
+      getColorByCellState
+};

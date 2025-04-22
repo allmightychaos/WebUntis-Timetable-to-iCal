@@ -5,7 +5,7 @@ dotenv.config();
 
 const domain = process.env.WEBUNTIS_DOMAIN;
 
-export async function fetchTimetableData(sessionId, personType, personId, date) {
+async function fetchTimetableData(sessionId, personType, personId, date) {
       try {
             const url = `https://${domain}.webuntis.com/WebUntis/api/public/timetable/weekly/data?elementType=${personType}&elementId=${personId}&date=${date}&formatId=1`;
             const headers = {
@@ -20,3 +20,5 @@ export async function fetchTimetableData(sessionId, personType, personId, date) 
             return null;
       }
 }
+
+module.exports = { fetchTimetableData };

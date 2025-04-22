@@ -18,4 +18,4 @@ async function login(domain, school, username, password) {
       }
 }
 
-export { login };
+module.exports = { login };
