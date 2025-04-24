@@ -1,17 +1,20 @@
 [build]
   functions = "netlify/functions"
 
+[dev]
+  functions = "netlify/functions"
+
 [functions]
   node_bundler = "esbuild"
 
 [[redirects]]
-  from = "/generate-ical"
-  to = "/.netlify/functions/generateTimetableIcal"
+  from = "/api/timetable"
+  to = "/.netlify/functions/icalHandler"
   status = 200
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/generateTimetableIcal"
+  to = "/.netlify/functions/icalHandler"
   status = 200
 
 [[plugins]]

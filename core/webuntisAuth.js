@@ -1,4 +1,4 @@
-// src/core/auth.js
+// src/core/webuntisAuth.js
 const axios = require('axios');
 
 async function login(domain, school, username, password) {

@@ -1,4 +1,4 @@
-// src/core/fetchData.js
+// src/core/webuntisFetch.js
 const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();

@@ -1,4 +1,4 @@
-// src/core/processData.js
+// src/core/timetableProcessor.js
 const { createElementMap, formatDate, formatTime, capitalizeFirstLetter, getColorByCellState } = require('./utils.js');
 
 async function processTimetableData(dataElementPeriods, filteredData) {
