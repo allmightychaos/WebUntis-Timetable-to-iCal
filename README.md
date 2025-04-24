@@ -2,7 +2,7 @@
 
 **Convert your WebUntis school timetable into an iCal (.ics) file for easy import into any calendar.**
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 project-root/
@@ -22,7 +22,7 @@ project-root/
 └── .env                      # Environment variables (ignored by Git)
 ```
 
-## ⚙️ Setup
+## Setup
 
 1. **Clone the repo**
    ```bash
