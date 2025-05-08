@@ -71,9 +71,19 @@ netlify dev
 ## Recent Changes
 
 ### School Calendar Updates - 8th May 2025
-- School year end date adjusted to July 7th
-- Date-related utilities moved to `utils.js` for better code organization
-- Improved handling of summer break and school year transitions
+- Added custom week range selection (1-40 weeks) for timetable generation
+- Implemented smart school year handling:
+  * Automatic detection of summer break periods
+  * Resumes from first Monday of September after summer break
+  * School year end date set to July 7th
+- Enhanced date calculations:
+  * Calculates remaining weeks until school year end
+  * Caps requested weeks to remaining school weeks
+  * Handles transitions between school years
+- Improved code organization:
+  * Moved date-related utilities to `utils.js`
+  * Better separation of concerns
+  * More maintainable and reusable code structure
 
 ## Netlify Deployment
 
