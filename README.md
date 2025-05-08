@@ -11,7 +11,8 @@ project-root/
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
-│   └── timetableToIcal.js    # Turn JSON timetable into an .ics string
+│   ├── timetableToIcal.js    # Turn JSON timetable into an .ics string
+│   └── utils.js             # Shared utility functions (dates, formatting, etc.)
 ├── icals/                    # Local output folder for generated .ics files
 ├── netlify/                  # Netlify Functions folder
 │   └── functions/
@@ -67,6 +68,12 @@ Start:
 netlify dev
 ```
 
+## Recent Changes
+
+### School Calendar Updates - 8th May 2025
+- School year end date adjusted to July 7th
+- Date-related utilities moved to `utils.js` for better code organization
+- Improved handling of summer break and school year transitions
 
 ## Netlify Deployment
 

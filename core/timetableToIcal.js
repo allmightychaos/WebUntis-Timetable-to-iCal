@@ -3,17 +3,44 @@ const icalModule = require('ical-generator');
 const ical = icalModule.default || icalModule;
 const { format, add } = require('date-fns');
 const { getTimetable } = require('./timetableBuilder');
+const { getSchoolYearEnd, getNextSchoolYearStart, isSummerBreak, getRemainingSchoolWeeks } = require('./utils');
 
 const TIMEZONE = 'Europe/Vienna';
 
-async function generateIcal(startDate = format(new Date(), 'yyyy-MM-dd')) {
+async function generateIcal(weeks = 4, startDate = format(new Date(), 'yyyy-MM-dd')) {
+      // Validate weeks parameter
+      if (weeks < 1 || weeks > 40) {
+            throw new Error('Weeks parameter must be between 1 and 40');
+      }
+
       const cal = ical({ name: 'Stundenplan' });
-      const nextWeek = format(add(new Date(startDate), { weeks: 1 }), 'yyyy-MM-dd');
+      const start = new Date(startDate);
+      
+      // Handle summer break
+      if (isSummerBreak(start)) {
+            const nextYearStart = getNextSchoolYearStart();
+            startDate = format(nextYearStart, 'yyyy-MM-dd');
+      }
 
-      const week1 = await getTimetable(startDate);
-      const week2 = await getTimetable(nextWeek);
+      // Calculate actual number of weeks to fetch
+      const remainingWeeks = getRemainingSchoolWeeks(startDate);
+      const weeksToFetch = Math.min(weeks, remainingWeeks);
 
-      for (const week of [week1, week2]) {
+      if (weeksToFetch === 0) {
+            return cal.toString();
+      }
+
+      // Fetch timetable for each week
+      const weekPromises = [];
+      for (let i = 0; i < weeksToFetch; i++) {
+            const weekDate = format(add(new Date(startDate), { weeks: i }), 'yyyy-MM-dd');
+            weekPromises.push(getTimetable(weekDate));
+      }
+
+      const weeksData = await Promise.all(weekPromises);
+
+      // Process each week's data
+      for (const week of weeksData) {
             Object.values(week).forEach(day =>
                   day.forEach(evt => {
                         if (evt.cellState !== 'CANCEL' && !evt.isFreePeriod) {

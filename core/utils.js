@@ -38,10 +38,48 @@ function getColorByCellState(cellState) {
       return colors[cellState] || null;
 }
 
+function getSchoolYearEnd() {
+      const currentYear = new Date().getFullYear();
+      // School year ends in July
+      return new Date(currentYear, 6, 7); // July 7th
+}
+
+function getNextSchoolYearStart() {
+      const currentYear = new Date().getFullYear();
+      // Find first Monday of September
+      const september = new Date(currentYear, 8, 1); // September 1st
+      const dayOfWeek = september.getDay();
+      const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+      return new Date(currentYear, 8, 1 + daysUntilMonday);
+}
+
+function isSummerBreak(date) {
+      const schoolYearEnd = getSchoolYearEnd();
+      const nextYearStart = getNextSchoolYearStart();
+      return date >= schoolYearEnd && date < nextYearStart;
+}
+
+function getRemainingSchoolWeeks(startDate) {
+      const schoolYearEnd = getSchoolYearEnd();
+      const start = new Date(startDate);
+      
+      if (start >= schoolYearEnd) {
+            return 0;
+      }
+      
+      const diffTime = Math.abs(schoolYearEnd - start);
+      const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+      return diffWeeks;
+}
+
 module.exports = {
       createElementMap,
       formatTime,
       formatDate,
       capitalizeFirstLetter,
-      getColorByCellState
+      getColorByCellState,
+      getSchoolYearEnd,
+      getNextSchoolYearStart,
+      isSummerBreak,
+      getRemainingSchoolWeeks
 };
