@@ -1,11 +1,12 @@
 {
   "name": "timetable-ical",
   "version": "1.0.0",
-  "main": "run.js",
+  "main": "cliGenerateIcal.js",
   "scripts": {
     "dev": "netlify dev",
     "build": "netlify build",
-    "timetable": "node run.js"
+    "timetable": "node cliGenerateIcal.js",
+    "cli": "node cliGenerateIcal.js"
   },
   "keywords": [],
   "author": "",
