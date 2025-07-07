@@ -49,7 +49,7 @@ function getNextSchoolYearStart() {
       // Find first Monday of September
       const september = new Date(currentYear, 8, 1); // September 1st
       const dayOfWeek = september.getDay();
-      const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+      const daysUntilMonday = (8 - dayOfWeek) % 7;  // 0 if already Monday
       return new Date(currentYear, 8, 1 + daysUntilMonday);
 }
 
