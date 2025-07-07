@@ -55,8 +55,8 @@ project-root/
 ### 1) Local CLI (Node)
 
 ```bash
-npm run cli
-# or:
+npm run cli # (if defined)
+# or run directly:
 node cliGenerateIcal.js
 ```
 Result: `icals/school-timetable-YYYY-MM-DD.ics`
