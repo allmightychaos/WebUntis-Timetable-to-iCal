@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "netlify dev",
     "build": "netlify build",
-    "timetable": "node run.js"
+    "timetable": "node run.js",
+    "test": "node tests/utils.test.js"
   },
   "keywords": [],
   "author": "",
