@@ -1,4 +1,4 @@
-// run.js
+// cliGenerateIcal.js
 const fs = require('fs');
 const path = require('path');
 const { format } = require('date-fns');
