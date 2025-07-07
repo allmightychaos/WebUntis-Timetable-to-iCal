@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "netlify dev",
     "build": "netlify build",
+    "timetable": "node run.js",
+    "test": "node tests/utils.test.js"
     "timetable": "node cliGenerateIcal.js",
     "cli": "node cliGenerateIcal.js"
   },
