@@ -1,4 +1,4 @@
-// core/timetable.js
+// core/timetableBuilder.js
 const dotenv = require('dotenv');
 dotenv.config();
 
