@@ -1,2 +1,2 @@
-require('./utils.test');
-require('./domain.test');
+require("./utils.test");
+require("./domain.test");
