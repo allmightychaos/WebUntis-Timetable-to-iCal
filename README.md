@@ -93,6 +93,12 @@ netlify dev
    - New Site from Repo
    - Build-Command: `npm run build` (or empty)
    - Set ENV Variables (`WEBUNTIS_*`):
+     - `WEBUNTIS_DOMAIN`
+     - `WEBUNTIS_SCHOOL`
+     - `WEBUNTIS_USERNAME`
+     - `WEBUNTIS_PASSWORD`
+     
+   Netlify will deploy automatically on each push once the variables are set.
 
 ## License
 
