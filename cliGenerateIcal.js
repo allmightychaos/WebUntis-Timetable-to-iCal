@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { format } = require("date-fns");
 const { generateIcal } = require("./core/timetableToIcal");
+const { validateEnvironment } = require("./core/startup-validation");
 
 // Ensure output directory exists
 const OUTPUT_DIR = path.join(__dirname, "icals");
@@ -17,6 +18,9 @@ const getOutputFilename = () => {
 
 // Main execution
 async function main() {
+    // Run validation first. This will stop the script if the config is bad.
+    await validateEnvironment();
+
     try {
         // Generate iCal data
         const ics = await generateIcal();
