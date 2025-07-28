@@ -55,10 +55,12 @@ project-root/
    When running with Netlify (including `netlify dev`), any variables
    configured in your Netlify site will override values in this file.
 
-4. **Netlify CLI (optional)**
+4. **Netlify CLI**
    ```bash
    npm install -g netlify-cli
    ```
+   Required for running `netlify dev` (or `npm run dev`) to test the
+   Netlify function locally.
 
 ## Usage
 
@@ -70,6 +72,8 @@ production, and these take precedence over values in your local `.env` file.
 
 ### 1) Local CLI (Node)
 
+Run the generator entirely locally. No Netlify CLI required.
+
 ```bash
 npm run cli # (if defined)
 # or run directly:
@@ -79,13 +83,26 @@ Result: `icals/school-timetable-YYYY-MM-DD.ics`
 
 ### 2) Netlify Function
 
-Start:
+Requires the Netlify CLI.
+Start the local dev server with either command:
 ```bash
 netlify dev
+# or
+npm run dev
 ```
 
 
 ## Recent Changes
+
+### Environment Validation & Domain Improvements - 28th July 2025
+- Added startup environment checks and `.env.example` for easier setup.
+- `icalHandler` validates configuration before generating calendars.
+- `domain.js` now accepts full host names and verifies connectivity.
+- New `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
+- Local startup prefers Netlify-provided env vars when present.
+- Removed unused code and builtin dependencies; cleaned up tests.
+- Updated `.gitignore` to exclude generated `icals/` files.
+- Documentation improvements across README.
 
 ### School Calendar Updates - 8th May 2025
 - Added custom week range selection (1-40 weeks) for timetable generation
