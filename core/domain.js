@@ -1,7 +1,7 @@
 const https = require("https");
 
 // Static list of known WebUntis servers. If your server is missing, please
-// check https://status.webuntis.com/ and open a PR to update this list.
+// check https://status.webuntis.com/ and open a PR (https://github.com/allmightychaos/WebUntis-Timetable-to-iCal/pulls) to update this list.
 const WEBUNTIS_SERVERS = [
     "Achilles",
     "Ajax",
