@@ -3,6 +3,7 @@ const icalModule = require("ical-generator");
 const ical = icalModule.default || icalModule;
 const { format, add } = require("date-fns");
 const { getTimetable } = require("./timetableBuilder");
+const { validateEnvironment } = require("./startup-validation");
 const {
     getSchoolYearEnd,
     getNextSchoolYearStart,
@@ -16,6 +17,9 @@ async function generateIcal(
     weeks = 4,
     startDate = format(new Date(), "yyyy-MM-dd")
 ) {
+    // Ensure required env vars are present and valid on every run
+    await validateEnvironment();
+
     // Validate weeks parameter
     if (weeks < 1 || weeks > 40) {
         throw new Error("Weeks parameter must be between 1 and 40");
