@@ -59,6 +59,10 @@ project-root/
 
 ## Usage
 
+Environment variables are validated automatically on every run. If the
+configuration is invalid, the application will exit with a helpful error
+message.
+
 ### 1) Local CLI (Node)
 
 ```bash
@@ -74,6 +78,7 @@ Start:
 ```bash
 netlify dev
 ```
+
 
 ## Recent Changes
 
