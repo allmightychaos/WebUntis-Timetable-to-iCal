@@ -38,7 +38,7 @@ project-root/
    ```
 
 3. **Configure environment**
-   Create a `.env` in project root:
+   Copy `.env.example` to `.env` in the project root and edit the values:
    ```env
    WEBUNTIS_DOMAIN=yourServer
    # short name like `nete` or the full host `nete.webuntis.com`
