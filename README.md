@@ -28,7 +28,7 @@ project-root/
 1. **Clone the repo**
    ```bash
    git clone <repo-url>
-   cd timetable-ical
+   cd WebUntis-Timetable-to-iCal
    ```
 
 2. **Install dependencies**
