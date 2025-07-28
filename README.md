@@ -27,37 +27,40 @@ project-root/
 ## Setup
 
 1. **Clone the repo**
-   ```bash
-   git clone https://github.com/allmightychaos/WebUntis-Timetable-to-iCal.git
-   cd WebUntis-Timetable-to-iCal
-   ```
+
+    ```bash
+    git clone https://github.com/allmightychaos/WebUntis-Timetable-to-iCal.git
+    cd WebUntis-Timetable-to-iCal
+    ```
 
 2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+
+    ```bash
+    npm install
+    ```
 
 3. **Configure environment**
    Rename `.env.example` to `.env` in the project root and edit the values:
-   ```env
-   WEBUNTIS_DOMAIN=yourServer
-   # short server name like `Achilles` or the full host `achilles.webuntis.com`
-   WEBUNTIS_SCHOOL=YourSchoolName
-   WEBUNTIS_USERNAME=yourUsername
-   WEBUNTIS_PASSWORD=yourPassword
-   ```
 
-   If you encounter an error that the entered server does not exist, the
-   bundled server list may be outdated. Check the current servers at
-   <https://status.webuntis.com/> and feel free to submit a PR adding the new
-   server name.
+    ```env
+    WEBUNTIS_DOMAIN=yourServer
+    # short server name like `Achilles` or the full host `achilles.webuntis.com`
+    WEBUNTIS_SCHOOL=YourSchoolName
+    WEBUNTIS_USERNAME=yourUsername
+    WEBUNTIS_PASSWORD=yourPassword
+    ```
+
+    If you encounter an error that the entered server does not exist, the
+    bundled server list may be outdated. Check the current servers at
+    <https://status.webuntis.com/> and feel free to submit a PR adding the new
+    server name.
 
 4. **Netlify CLI**
-   ```bash
-   npm install -g netlify-cli
-   ```
-   Required for running `netlify dev` (or `npm run dev`) to test the
-   Netlify function locally.
+    ```bash
+    npm install -g netlify-cli
+    ```
+    Required for running `netlify dev` (or `npm run dev`) to test the
+    Netlify function locally.
 
 ## Usage
 
@@ -70,12 +73,14 @@ Run the generator entirely locally. No Netlify CLI required.
 ```bash
 node cliGenerateIcal.js
 ```
+
 Result: `{project}/icals/school-timetable-YYYY-MM-DD.ics`
 
 ### 2) Netlify Function
 
 Requires the Netlify CLI.
 Start the local dev server with either command:
+
 ```bash
 netlify dev
 ```
@@ -86,45 +91,46 @@ or
 npm run dev
 ```
 
-
 ## Recent Changes
 
 ### Environment Validation & Domain Improvements - 28th July 2025
-- Added startup environment checks and `.env.example` for easier setup.
-- `icalHandler` validates configuration before generating calendars.
-- `domain.js` now accepts full host names and verifies connectivity.
-- `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
-- Removed unused code and builtin dependencies; cleaned up tests.
-- Updated `.gitignore` to exclude generated `icals/` files (local testing purposes).
-- Documentation improvements across README.
+
+-   Added startup environment checks and `.env.example` for easier setup.
+-   `icalHandler` validates configuration before generating calendars.
+-   `domain.js` now accepts full host names and verifies connectivity.
+-   `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
+-   Removed unused code and builtin dependencies; cleaned up tests.
+-   Updated `.gitignore` to exclude generated `icals/` files (local testing purposes).
+-   Documentation improvements across README.
 
 ### School Calendar Updates - 8th May 2025
-- Added custom week range selection (1-40 weeks) for timetable generation
-- Implemented smart school year handling:
-  * Automatic detection of summer break periods
-  * Resumes from first Monday of September after summer break
-  * School year end date set to July 7th
-- Enhanced date calculations:
-  * Calculates remaining weeks until school year end
-  * Caps requested weeks to remaining school weeks
-  * Handles transitions between school years
-- Improved code organization:
-  * Moved date-related utilities to `utils.js`
-  * Better separation of concerns
-  * More maintainable and reusable code structure
+
+-   Added custom week range selection (1-40 weeks) for timetable generation
+-   Implemented smart school year handling:
+    -   Automatic detection of summer break periods
+    -   Resumes from first Monday of September after summer break
+    -   School year end date set to July 7th
+-   Enhanced date calculations:
+    -   Calculates remaining weeks until school year end
+    -   Caps requested weeks to remaining school weeks
+    -   Handles transitions between school years
+-   Improved code organization:
+    -   Moved date-related utilities to `utils.js`
+    -   Better separation of concerns
+    -   More maintainable and reusable code structure
 
 ## Netlify Deployment
 
 1. Push `main`
 2. On Netlify:
-   - New Site from Repo
-   - Build-Command: `npm run build` (or empty)
-   - Set environment variables under **Site settings → Build & deploy → Environment**:
-     - `WEBUNTIS_DOMAIN`
-     - `WEBUNTIS_SCHOOL`
-     - `WEBUNTIS_USERNAME`
-     - `WEBUNTIS_PASSWORD`
-   - Click **Deploy site** to trigger the initial build
+    - New Site from Repo
+    - Build-Command: `npm run build` (or empty)
+    - Set environment variables under **Site settings → Build & deploy → Environment**:
+        - `WEBUNTIS_DOMAIN`
+        - `WEBUNTIS_SCHOOL`
+        - `WEBUNTIS_USERNAME`
+        - `WEBUNTIS_PASSWORD`
+    - Click **Deploy site** to trigger the initial build
 3. Netlify will deploy automatically on each push once the variables are set.
 
 ## License
