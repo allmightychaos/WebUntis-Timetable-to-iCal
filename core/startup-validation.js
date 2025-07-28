@@ -1,5 +1,9 @@
 const { resolveWebUntisHost } = require("./domain");
-require("dotenv").config();
+
+// Load .env locally but prefer Netlify-injected variables when available
+if (!process.env.NETLIFY && !process.env.NETLIFY_DEV) {
+    require("dotenv").config();
+}
 
 /**
  * Validates the essential WebUntis environment variables on application startup.

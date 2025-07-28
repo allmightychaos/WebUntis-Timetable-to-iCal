@@ -1,6 +1,9 @@
 // core/timetableBuilder.js
 const dotenv = require("dotenv");
-dotenv.config();
+// Load .env only when not running on Netlify
+if (!process.env.NETLIFY && !process.env.NETLIFY_DEV) {
+    dotenv.config();
+}
 
 const { login } = require("./webuntisAuth");
 const { fetchTimetableData } = require("./webuntisFetch");

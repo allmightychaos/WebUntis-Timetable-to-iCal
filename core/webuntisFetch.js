@@ -2,7 +2,10 @@
 const axios = require("axios");
 const dotenv = require("dotenv");
 const { resolveWebUntisHost } = require("./domain");
-dotenv.config();
+// Load .env only when not running on Netlify
+if (!process.env.NETLIFY && !process.env.NETLIFY_DEV) {
+    dotenv.config();
+}
 
 const domain = process.env.WEBUNTIS_DOMAIN;
 
