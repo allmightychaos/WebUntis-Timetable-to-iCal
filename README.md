@@ -8,6 +8,7 @@
 project-root/
 ├── core/                     # Shared logic for WebUntis + iCal generation
 │   ├── webuntisAuth.js       # Login/auth against WebUntis API
+│   ├── domain.js            # Resolve and validate WebUntis host domain
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
@@ -28,7 +29,7 @@ project-root/
 1. **Clone the repo**
    ```bash
    git clone <repo-url>
-   cd timetable-ical
+   cd WebUntis-Timetable-to-iCal
    ```
 
 2. **Install dependencies**
@@ -97,7 +98,13 @@ netlify dev
 2. On Netlify:
    - New Site from Repo
    - Build-Command: `npm run build` (or empty)
-   - Set ENV Variables (`WEBUNTIS_*`):
+   - Set environment variables under **Site settings → Build & deploy → Environment**:
+     - `WEBUNTIS_DOMAIN`
+     - `WEBUNTIS_SCHOOL`
+     - `WEBUNTIS_USERNAME`
+     - `WEBUNTIS_PASSWORD`
+   - Click **Deploy site** to trigger the initial build
+3. Netlify will deploy automatically on each push once the variables are set.
 
 ## License
 
