@@ -52,6 +52,9 @@ project-root/
    <https://status.webuntis.com/> and feel free to submit a PR adding the new
    server name.
 
+   When running with Netlify (including `netlify dev`), any variables
+   configured in your Netlify site will override values in this file.
+
 4. **Netlify CLI (optional)**
    ```bash
    npm install -g netlify-cli
@@ -62,6 +65,8 @@ project-root/
 Environment variables are validated automatically on every run. If the
 configuration is invalid, the application will exit with a helpful error
 message.
+Netlify provides its own environment variables during `netlify dev` or on
+production, and these take precedence over values in your local `.env` file.
 
 ### 1) Local CLI (Node)
 
