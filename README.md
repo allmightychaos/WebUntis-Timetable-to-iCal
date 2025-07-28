@@ -41,11 +41,16 @@ project-root/
    Create a `.env` in project root:
    ```env
    WEBUNTIS_DOMAIN=yourServer
-   # `nete` or `nete.webuntis.com`
+   # short name like `nete` or the full host `nete.webuntis.com`
    WEBUNTIS_SCHOOL=YourSchoolName
    WEBUNTIS_USERNAME=yourUsername
    WEBUNTIS_PASSWORD=yourPassword
    ```
+
+   If you encounter an error that the entered server does not exist, the
+   bundled server list may be outdated. Check the current servers at
+   <https://status.webuntis.com/> and feel free to submit a PR adding the new
+   server name.
 
 4. **Netlify CLI (optional)**
    ```bash
