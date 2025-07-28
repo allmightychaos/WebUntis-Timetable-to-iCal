@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 /**
  * CLI tool to generate and save iCal timetable
  * Usage: node cliGenerateIcal.js
  */
 
+=======
+// cliGenerateIcal.js
+>>>>>>> df8f6eca53c4d568c7fca54dc0e5a2775301c3bd
 const fs = require('fs');
 const path = require('path');
 const { format } = require('date-fns');

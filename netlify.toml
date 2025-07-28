@@ -13,6 +13,11 @@
   status = 200
 
 [[redirects]]
+  from = "/:date"
+  to = "/.netlify/functions/icalHandler?date=:date"
+  status = 200
+
+[[redirects]]
   from = "/"
   to = "/.netlify/functions/icalHandler"
   status = 200

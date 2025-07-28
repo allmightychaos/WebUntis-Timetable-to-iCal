@@ -39,7 +39,8 @@ project-root/
 3. **Configure environment**
    Create a `.env` in project root:
    ```env
-   WEBUNTIS_DOMAIN=domain // e.g. `nete`
+   WEBUNTIS_DOMAIN=yourServer
+   # `nete` or `nete.webuntis.com`
    WEBUNTIS_SCHOOL=YourSchoolName
    WEBUNTIS_USERNAME=yourUsername
    WEBUNTIS_PASSWORD=yourPassword
@@ -55,8 +56,8 @@ project-root/
 ### 1) Local CLI (Node)
 
 ```bash
-npm run cli
-# or:
+npm run cli # (if defined)
+# or run directly:
 node cliGenerateIcal.js
 ```
 Result: `icals/school-timetable-YYYY-MM-DD.ics`

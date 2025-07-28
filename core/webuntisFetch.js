@@ -1,13 +1,15 @@
 // src/core/webuntisFetch.js
 const axios = require('axios');
 const dotenv = require('dotenv');
+const { resolveWebUntisHost } = require('./domain');
 dotenv.config();
 
 const domain = process.env.WEBUNTIS_DOMAIN;
 
 async function fetchTimetableData(sessionId, personType, personId, date) {
       try {
-            const url = `https://${domain}.webuntis.com/WebUntis/api/public/timetable/weekly/data?elementType=${personType}&elementId=${personId}&date=${date}&formatId=1`;
+            const host = await resolveWebUntisHost(domain);
+            const url = `https://${host}/WebUntis/api/public/timetable/weekly/data?elementType=${personType}&elementId=${personId}&date=${date}&formatId=1`;
             const headers = {
                   'Cookie': `JSESSIONID=${sessionId};`,
                   'User-Agent': 'Mozilla/5.0'
