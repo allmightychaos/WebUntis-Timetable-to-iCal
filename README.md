@@ -8,6 +8,7 @@
 project-root/
 ├── core/                     # Shared logic for WebUntis + iCal generation
 │   ├── webuntisAuth.js       # Login/auth against WebUntis API
+│   ├── domain.js            # Resolve and validate WebUntis host domain
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
