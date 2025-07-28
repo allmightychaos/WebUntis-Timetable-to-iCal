@@ -1,9 +1,11 @@
 // src/core/webuntisAuth.js
 const axios = require('axios');
+const { resolveWebUntisHost } = require('./domain');
 
 async function login(domain, school, username, password) {
       try {
-            const url = `https://${domain}.webuntis.com/WebUntis/jsonrpc.do?school=${encodeURIComponent(school)}`;
+            const host = await resolveWebUntisHost(domain);
+            const url = `https://${host}/WebUntis/jsonrpc.do?school=${encodeURIComponent(school)}`;
             const response = await axios.post(url, {
                   id: "id",
                   method: "authenticate",
