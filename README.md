@@ -8,12 +8,12 @@
 project-root/
 ├── core/                     # Shared logic for WebUntis + iCal generation
 │   ├── webuntisAuth.js       # Login/auth against WebUntis API
-│   ├── domain.js            # Resolve and validate WebUntis host domain
+│   ├── domain.js             # Resolve and validate WebUntis host domain
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
 │   ├── timetableToIcal.js    # Turn JSON timetable into an .ics string
-│   └── utils.js             # Shared utility functions (dates, formatting, etc.)
+│   └── utils.js              # Shared utility functions (dates, formatting, etc.)
 ├── icals/                    # Local output folder for generated .ics files
 ├── netlify/                  # Netlify Functions folder
 │   └── functions/
@@ -28,7 +28,7 @@ project-root/
 
 1. **Clone the repo**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/allmightychaos/WebUntis-Timetable-to-iCal.git
    cd WebUntis-Timetable-to-iCal
    ```
 
@@ -38,10 +38,10 @@ project-root/
    ```
 
 3. **Configure environment**
-   Copy `.env.example` to `.env` in the project root and edit the values:
+   Rename `.env.example` to `.env` in the project root and edit the values:
    ```env
    WEBUNTIS_DOMAIN=yourServer
-   # short name like `nete` or the full host `nete.webuntis.com`
+   # short server name like `Achilles` or the full host `achilles.webuntis.com`
    WEBUNTIS_SCHOOL=YourSchoolName
    WEBUNTIS_USERNAME=yourUsername
    WEBUNTIS_PASSWORD=yourPassword
@@ -52,9 +52,6 @@ project-root/
    <https://status.webuntis.com/> and feel free to submit a PR adding the new
    server name.
 
-   When running with Netlify (including `netlify dev`), any variables
-   configured in your Netlify site will override values in this file.
-
 4. **Netlify CLI**
    ```bash
    npm install -g netlify-cli
@@ -64,22 +61,16 @@ project-root/
 
 ## Usage
 
-Environment variables are validated automatically on every run. If the
-configuration is invalid, the application will exit with a helpful error
-message.
-Netlify provides its own environment variables during `netlify dev` or on
-production, and these take precedence over values in your local `.env` file.
+**Note**: WEBUNTIS_DOMAIN will be validated automatically on every run.
 
 ### 1) Local CLI (Node)
 
 Run the generator entirely locally. No Netlify CLI required.
 
 ```bash
-npm run cli # (if defined)
-# or run directly:
 node cliGenerateIcal.js
 ```
-Result: `icals/school-timetable-YYYY-MM-DD.ics`
+Result: `{project}/icals/school-timetable-YYYY-MM-DD.ics`
 
 ### 2) Netlify Function
 
@@ -87,7 +78,11 @@ Requires the Netlify CLI.
 Start the local dev server with either command:
 ```bash
 netlify dev
-# or
+```
+
+or
+
+```bash
 npm run dev
 ```
 
@@ -98,10 +93,9 @@ npm run dev
 - Added startup environment checks and `.env.example` for easier setup.
 - `icalHandler` validates configuration before generating calendars.
 - `domain.js` now accepts full host names and verifies connectivity.
-- New `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
-- Local startup prefers Netlify-provided env vars when present.
+- `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
 - Removed unused code and builtin dependencies; cleaned up tests.
-- Updated `.gitignore` to exclude generated `icals/` files.
+- Updated `.gitignore` to exclude generated `icals/` files (local testing purposes).
 - Documentation improvements across README.
 
 ### School Calendar Updates - 8th May 2025
