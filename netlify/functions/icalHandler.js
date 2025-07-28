@@ -1,8 +1,11 @@
 // netlify/functions/icalHandler.js
 const { format, parse, startOfWeek } = require("date-fns");
 const { generateIcal } = require("../../core/timetableToIcal");
+const { validateEnvironment } = require("../../core/startup-validation");
 
 exports.handler = async (event) => {
+    // Run validation first. This will stop the function if the config is bad.
+    await validateEnvironment();
     try {
         let startDate;
         const dateParam =
