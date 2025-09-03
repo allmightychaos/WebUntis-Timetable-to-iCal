@@ -44,36 +44,50 @@ function getColorByCellState(cellState) {
     return colors[cellState] || null;
 }
 
-function getSchoolYearEnd() {
-    const currentYear = new Date().getFullYear();
-    // School year ends in July
-    return new Date(currentYear, 6, 7); // July 7th
+// --- School year helpers (Austria style: starts early Sept, ends early July) ---
+function firstMondayOfSeptember(year) {
+    const sept1 = new Date(year, 8, 1); // Sept = 8
+    const day = sept1.getDay(); // 0=Sun ... 1=Mon
+    const offset = (8 - day) % 7; // days until Monday
+    return new Date(year, 8, 1 + offset);
 }
 
-function getNextSchoolYearStart() {
-    const currentYear = new Date().getFullYear();
-    // Find first Monday of September
-    const september = new Date(currentYear, 8, 1); // September 1st
-    const dayOfWeek = september.getDay();
-    const daysUntilMonday = (8 - dayOfWeek) % 7; // 0 if already Monday
-    return new Date(currentYear, 8, 1 + daysUntilMonday);
+// End of the school year is always July 7 of the target school-year end year.
+// If we're already in/after September, the current school year ends next year's July 7.
+function getSchoolYearEnd(refDate = new Date()) {
+    const yearEndYear =
+        refDate.getMonth() >= 8
+            ? refDate.getFullYear() + 1
+            : refDate.getFullYear();
+    return new Date(yearEndYear, 6, 7); // July 7
+}
+
+// Next school year start: first Monday of September of the upcoming school year boundary.
+// If today is before the September start, return that; otherwise the September of next year.
+function getNextSchoolYearStart(refDate = new Date()) {
+    const year = refDate.getFullYear();
+    const thisYearStart = firstMondayOfSeptember(year);
+    if (refDate < thisYearStart) return thisYearStart; // not started yet
+    return firstMondayOfSeptember(year + 1);
 }
 
 function isSummerBreak(date) {
-    const schoolYearEnd = getSchoolYearEnd();
-    const nextYearStart = getNextSchoolYearStart();
-    return date >= schoolYearEnd && date < nextYearStart;
+    const year = date.getFullYear();
+    const summerStart = new Date(year, 6, 7); // July 7 current year
+    const nextStart = firstMondayOfSeptember(year);
+    return date >= summerStart && date < nextStart;
 }
 
 function getRemainingSchoolWeeks(startDate) {
-    const schoolYearEnd = getSchoolYearEnd();
     const start = new Date(startDate);
+    // Determine proper year-end relative to the start date
+    const schoolYearEnd = getSchoolYearEnd(start);
 
     if (start >= schoolYearEnd) {
-        return 0;
+        return 0; // after school year end (i.e. summer, handled earlier)
     }
 
-    const diffTime = Math.abs(schoolYearEnd - start);
+    const diffTime = schoolYearEnd - start; // ms
     const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
     return diffWeeks;
 }
