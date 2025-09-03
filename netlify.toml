@@ -24,3 +24,10 @@
 
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
