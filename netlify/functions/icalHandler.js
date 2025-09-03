@@ -4,44 +4,40 @@ const { generateIcal } = require("../../core/timetableToIcal");
 const { validateEnvironment } = require("../../core/startup-validation");
 
 exports.handler = async (event) => {
-    // ---- CORS default config ----
-    // Wenn du credentials: 'include' im Fetch nutzt, setze ALLOW_CREDENTIALS = true
-    // und verwende origin = event.headers.origin statt '*'.
-    const useCredentials = false; // <- bei Bedarf auf true setzen
+    const useCredentials = false;
     const origin = useCredentials ? event.headers.origin || "*" : "*";
     const defaultHeaders = {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        // wenn useCredentials === true, uncomment:
         // "Access-Control-Allow-Credentials": "true",
     };
 
-    // handle preflight
     if (event.httpMethod === "OPTIONS") {
-        return {
-            statusCode: 204,
-            headers: defaultHeaders,
-            body: "",
-        };
+        return { statusCode: 204, headers: defaultHeaders, body: "" };
     }
 
-    // Run validation first. This will stop the function if the config is bad.
     await validateEnvironment();
 
     try {
         let startDate;
-        const dateParam =
-            event.queryStringParameters && event.queryStringParameters.date;
-        if (dateParam) {
-            const parsed = parse(dateParam, "dd-MM-yyyy", new Date());
+        const qs = event.queryStringParameters || {};
+        if (qs.date) {
+            const parsed = parse(qs.date, "dd-MM-yyyy", new Date());
             if (!isNaN(parsed)) {
                 const monday = startOfWeek(parsed, { weekStartsOn: 1 });
                 startDate = format(monday, "yyyy-MM-dd");
             }
         }
 
-        const body = await generateIcal(1, startDate);
+        // NEW: weeks param (defaults to 4 like CLI)
+        const weeksParam = parseInt(qs.weeks || "4", 10);
+        const weeks =
+            Number.isInteger(weeksParam) && weeksParam >= 1 && weeksParam <= 40
+                ? weeksParam
+                : 4;
+
+        const body = await generateIcal(weeks, startDate);
         return {
             statusCode: 200,
             headers: {
