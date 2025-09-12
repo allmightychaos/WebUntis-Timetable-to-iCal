@@ -98,17 +98,36 @@ async function generateIcal(
                     const [d, m, y] = evt.date.split(".").map(Number);
                     const [sh, sm] = evt.startTime.split(":").map(Number);
                     const [eh, em] = evt.endTime.split(":").map(Number);
+
+                    // Build summary with fallbacks: subject_short -> subject_long -> periodText -> default
+                    const summary =
+                        evt.subject_short ||
+                        evt.subject_long ||
+                        evt.periodText ||
+                        "Untis Event";
+
+                    // Build description parts
+                    const descParts = [];
+                    if (evt.subject_long) descParts.push(evt.subject_long);
+                    // If we used periodText as summary (because no subject), avoid duplication; otherwise include it if present
+                    if (
+                        evt.periodText &&
+                        evt.periodText !== summary &&
+                        !descParts.includes(evt.periodText)
+                    ) {
+                        descParts.push(evt.periodText);
+                    }
+                    if (evt.room) descParts.push(`Raum: ${evt.room}`);
+                    if (evt.teacherName)
+                        descParts.push(`Lehrer: ${evt.teacherName}`);
+                    if (evt.cellState)
+                        descParts.push(`Status: ${evt.cellState}`);
+
                     cal.createEvent({
                         start: new Date(y, m - 1, d, sh, sm),
                         end: new Date(y, m - 1, d, eh, em),
-                        summary: evt.subject_short || "Untis Event",
-                        description: `${evt.subject_long || ""}${
-                            evt.room ? `, Raum: ${evt.room}` : ""
-                        }${
-                            evt.teacherName
-                                ? `, Lehrer: ${evt.teacherName}`
-                                : ""
-                        }`.trim(),
+                        summary,
+                        description: descParts.join(", "),
                         timezone: TIMEZONE,
                         color: evt.color || undefined,
                     });

@@ -35,7 +35,6 @@ async function processTimetableData(dataElementPeriods, filteredData) {
             lessonsMap[period.elements.find((e) => e.type === 3)?.id]
                 ?.longName || ""
         ),
-        color: getColorByCellState(period.cellState),
     }));
 }
 
