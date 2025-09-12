@@ -12,6 +12,7 @@ project-root/
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
+│   ├── teacherEnrichment.js  # NEW: Fallback teacher name enrichment via REST detail endpoints
 │   ├── timetableToIcal.js    # Turn JSON timetable into an .ics string
 │   └── utils.js              # Shared utility functions (dates, formatting, etc.)
 ├── icals/                    # Local output folder for generated .ics files
@@ -102,7 +103,7 @@ Numbered helper scripts in `tests/` (run with `node tests/<file>`):
 5. `05-get-timetable.js` – Full build: processed + grouped + free periods -> writes cleaned JSON to `tests/output/timetable-YYYY-MM-DD.json`.
 6. `06-process-pipeline.js` – Step‑by‑step pipeline (login → fetch → process → group → insert free periods) prints day keys + sample.
 7. `07-generate-ical.js` – Generate `.ics` file (uses cleaned timetable builder internally).
-8. `08-detail-fallback.js` – Experimental: enrich missing teacher names via REST lesson detail endpoints; writes `tests/output/detail-enriched-week-YYYY-MM-DD.json`.
+8. `08-detail-fallback.js` – Experimental / diagnostic: enrich missing teacher names via REST detail endpoints; writes `tests/output/detail-enriched-week-YYYY-MM-DD.json`.
 
 Example (current week):
 
@@ -143,7 +144,44 @@ Cleaned timetable JSON shape (written to `tests/output/`):
 
 `tests/output/` is git‑ignored (`.gitignore`) for local inspection only.
 
+## Automatic Teacher Name Enrichment (NEW)
+
+Some WebUntis instances do not include teacher names in the standard weekly JSON. A fallback enrichment layer now runs automatically inside `timetableBuilder.js` after the raw periods are processed but before grouping and free-period insertion.
+
+How it works:
+
+-   Detects entries with empty `teacherName`.
+-   Attempts to obtain a REST Bearer token once per run (prefers session-based `/WebUntis/api/token/new`, falls back to legacy REST login endpoints).
+-   Queries the REST detail endpoint (`/WebUntis/api/rest/view/v2/calendar-entry/detail`) for missing lessons (student-scoped and lesson-scoped variants) until names are resolved or a max limit is reached.
+-   Caches detail responses to avoid duplicate network calls.
+-   Gracefully continues if enrichment fails; original timetable stays intact.
+
+Environment toggles:
+
+-   `TEACHER_ENRICH_DISABLE=1` – disable enrichment entirely.
+-   `TEACHER_ENRICH_MAX=40` (default 60 in code) – cap detail requests per timetable build.
+-   `TEACHER_ENRICH_VERBOSE=1` – verbose logging of enrichment attempts/errors.
+-   Optional pre-supplied values (if you already have them):
+    -   `WEBUNTIS_BEARER` – skip token acquisition heuristics.
+    -   `WEBUNTIS_TENANT_ID` – forwarded as `Tenant-Id` header.
+    -   `WEBUNTIS_SCHOOL_YEAR_ID` – forwarded as `X-Webuntis-Api-School-Year-Id`.
+
+Diagnostic script (`tests/08-detail-fallback.js`) remains available for deeper debugging; it is no longer required for normal runs.
+
+Limitations:
+
+-   Only teacher names are enriched (room enrichment removed due to inconsistent data exposure).
+-   If the REST endpoints are blocked or changed, enrichment silently degrades.
+
 ## Recent Changes
+
+### Teacher Enrichment Integration - 12th Sep 2025
+
+-   Added `core/teacherEnrichment.js` and integrated automatic teacher name enrichment into the main timetable pipeline.
+-   Single bearer acquisition per run with retry on 401 and caching of detail calls.
+-   Added environment toggles (`TEACHER_ENRICH_*`).
+-   Updated README with documentation and usage notes.
+-   Retained diagnostic script `08-detail-fallback.js` for advanced analysis.
 
 ### Environment Validation & Domain Improvements - 28th July 2025
 

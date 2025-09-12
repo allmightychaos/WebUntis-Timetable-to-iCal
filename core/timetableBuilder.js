@@ -8,6 +8,7 @@ const {
     groupAndSortTimetable,
     insertFreePeriods,
 } = require("./timetableProcessor");
+const { enrichTeachers } = require("./teacherEnrichment"); // NEW: teacher enrichment
 
 async function getTimetable(startDate) {
     const creds = [
@@ -37,11 +38,42 @@ async function getTimetable(startDate) {
         rooms: elems.filter((e) => e.type === 4),
     };
 
-    // verarbeiten, sortieren, Free-Periods einfügen
+    // verarbeiten -> flache Lesson-Array
     const processed = await processTimetableData(
         raw.elementPeriods[personId],
         filtered
     );
+
+    // AUTOMATIC TEACHER ENRICHMENT
+    // Füllt fehlende Lehrer-Namen über REST Detail Endpoints, falls notwendig.
+    try {
+        const disable = /^(1|true|yes)$/i.test(
+            process.env.TEACHER_ENRICH_DISABLE || ""
+        );
+        if (!disable) {
+            await enrichTeachers(processed, {
+                sessionId,
+                personId,
+                domain: creds[0],
+                school: creds[1],
+                username: creds[2],
+                password: creds[3],
+                maxDetails: parseInt(
+                    process.env.TEACHER_ENRICH_MAX || "60",
+                    10
+                ),
+                verbose: /^(1|true|yes)$/i.test(
+                    process.env.TEACHER_ENRICH_VERBOSE || ""
+                ),
+            });
+        }
+    } catch (e) {
+        if (/^(1|true|yes)$/i.test(process.env.TEACHER_ENRICH_VERBOSE || "")) {
+            console.error("[teacher-enrichment] Fehler:", e.message);
+        }
+    }
+
+    // gruppieren + sortieren + freie Zeiten einfügen
     const grouped = groupAndSortTimetable(processed);
     return insertFreePeriods(grouped);
 }
