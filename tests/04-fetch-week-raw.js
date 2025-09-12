@@ -1,0 +1,45 @@
+// tests/04-fetch-week-raw.js
+require("dotenv").config();
+const { format, startOfWeek } = require("date-fns");
+const { login } = require("../core/webuntisAuth");
+const { fetchTimetableData } = require("../core/webuntisFetch");
+const fs = require("fs");
+const path = require("path");
+
+(async () => {
+    try {
+        const { sessionId, personId, personType } = await login(
+            process.env.WEBUNTIS_DOMAIN,
+            process.env.WEBUNTIS_SCHOOL,
+            process.env.WEBUNTIS_USERNAME,
+            process.env.WEBUNTIS_PASSWORD
+        );
+        const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+        const date = format(monday, "yyyy-MM-dd");
+        const raw = await fetchTimetableData(
+            sessionId,
+            personType,
+            personId,
+            date
+        );
+        if (!raw) throw new Error("No raw data");
+
+        const outDir = path.join(__dirname, "output");
+        fs.mkdirSync(outDir, { recursive: true });
+
+        // Write full JSON payload
+        const fullPath = path.join(outDir, `raw-week-${date}.json`);
+        fs.writeFileSync(fullPath, JSON.stringify(raw, null, 2), "utf8");
+
+        console.log("Saved full raw JSON:", fullPath);
+        console.log(
+            "elements:",
+            raw.elements?.length,
+            "periods roots:",
+            Object.keys(raw.elementPeriods || {}).length
+        );
+    } catch (e) {
+        console.error("Fetch failed:", e.message);
+        process.exit(1);
+    }
+})();

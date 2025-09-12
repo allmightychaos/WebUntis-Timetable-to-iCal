@@ -91,6 +91,57 @@ or
 npm run dev
 ```
 
+## Test / Development Scripts
+
+Numbered helper scripts in `tests/` (run with `node tests/<file>`):
+
+1. `01-validate-env.js` – Validate required environment variables.
+2. `02-resolve-domain.js` – Resolve/verify WebUntis domain.
+3. `03-login.js` – Perform login, outputs session/person identifiers.
+4. `04-fetch-week-raw.js` – Fetch raw weekly timetable JSON (unprocessed).
+5. `05-get-timetable.js` – Full build: processed + grouped + free periods -> writes cleaned JSON to `tests/output/timetable-YYYY-MM-DD.json`.
+6. `06-process-pipeline.js` – Step‑by‑step pipeline (login → fetch → process → group → insert free periods) prints day keys + sample.
+7. `07-generate-ical.js` – Generate `.ics` file (uses cleaned timetable builder internally).
+
+Example (current week):
+
+```bash
+node tests/05-get-timetable.js
+```
+
+Specific Monday:
+
+```bash
+node tests/05-get-timetable.js 2025-09-01
+```
+
+Cleaned timetable JSON shape (written to `tests/output/`):
+
+```json
+{
+    "generatedAt": "2025-09-12T08:30:11.123Z",
+    "days": [
+        {
+            "date": "2025-09-08",
+            "lessons": [
+                {
+                    "id": 123,
+                    "subject": "MATH",
+                    "teacher": "A.Teacher",
+                    "room": "101",
+                    "start": "08:00",
+                    "end": "08:50",
+                    "state": "STANDARD"
+                }
+            ],
+            "freePeriods": [{ "start": "09:40", "end": "10:30" }]
+        }
+    ]
+}
+```
+
+`tests/output/` is git‑ignored (`.gitignore`) for local inspection only.
+
 ## Recent Changes
 
 ### Environment Validation & Domain Improvements - 28th July 2025
