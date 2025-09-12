@@ -102,6 +102,7 @@ Numbered helper scripts in `tests/` (run with `node tests/<file>`):
 5. `05-get-timetable.js` – Full build: processed + grouped + free periods -> writes cleaned JSON to `tests/output/timetable-YYYY-MM-DD.json`.
 6. `06-process-pipeline.js` – Step‑by‑step pipeline (login → fetch → process → group → insert free periods) prints day keys + sample.
 7. `07-generate-ical.js` – Generate `.ics` file (uses cleaned timetable builder internally).
+8. `08-detail-fallback.js` – Experimental: enrich missing teacher names via REST lesson detail endpoints; writes `tests/output/detail-enriched-week-YYYY-MM-DD.json`.
 
 Example (current week):
 
