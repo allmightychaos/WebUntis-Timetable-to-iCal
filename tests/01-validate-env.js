@@ -1,4 +1,4 @@
-// tests/01-validate-env.js
+// tests/01-validate-env.js (multi-account)
 require("dotenv").config();
 const { validateEnvironment } = require("../core/startup-validation");
 

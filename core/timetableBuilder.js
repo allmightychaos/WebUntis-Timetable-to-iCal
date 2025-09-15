@@ -7,21 +7,15 @@ const {
     insertFreePeriods,
 } = require("./timetableProcessor");
 const { enrichTeachers } = require("./teacherEnrichment");
+const { getDefaultAccount } = require("./multiAccounts");
 
 async function getTimetable(startDate, credsOverride) {
-    const creds = credsOverride
-        ? [
-              credsOverride.domain,
-              credsOverride.school,
-              credsOverride.username,
-              credsOverride.password,
-          ]
-        : [
-              process.env.WEBUNTIS_DOMAIN,
-              process.env.WEBUNTIS_SCHOOL,
-              process.env.WEBUNTIS_USERNAME,
-              process.env.WEBUNTIS_PASSWORD,
-          ];
+    const acct = credsOverride || getDefaultAccount();
+    if (!acct)
+        throw new Error(
+            "No account available. Define WEBUNTIS_ACCOUNTS or pass credsOverride"
+        );
+    const creds = [acct.domain, acct.school, acct.username, acct.password];
     const loginData = await login(...creds);
     if (!loginData) throw new Error("Login failed");
 
@@ -30,7 +24,8 @@ async function getTimetable(startDate, credsOverride) {
         sessionId,
         personType,
         personId,
-        startDate
+        startDate,
+        acct.domain // ensure domain passed to fetch when fallback path used
     );
     if (!raw) throw new Error("Fetch failed");
 

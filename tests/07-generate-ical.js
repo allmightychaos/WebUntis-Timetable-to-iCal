@@ -1,4 +1,4 @@
-// tests/07-generate-ical.js
+// tests/07-generate-ical.js (first account from WEBUNTIS_ACCOUNTS)
 require("dotenv").config();
 const { format, startOfWeek } = require("date-fns");
 const { generateIcal } = require("../core/timetableToIcal");

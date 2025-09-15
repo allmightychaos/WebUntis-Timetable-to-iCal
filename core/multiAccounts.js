@@ -40,4 +40,8 @@ function getAccount(id) {
         loadAccounts().find((a) => a.id === String(id).toLowerCase()) || null
     );
 }
-module.exports = { loadAccounts, getAccount };
+function getDefaultAccount() {
+    const list = loadAccounts();
+    return list.length ? list[0] : null;
+}
+module.exports = { loadAccounts, getAccount, getDefaultAccount };

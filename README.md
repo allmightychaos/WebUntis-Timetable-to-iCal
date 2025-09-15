@@ -12,7 +12,7 @@ project-root/
 │   ├── webuntisFetch.js      # Fetch raw timetable data from WebUntis
 │   ├── timetableProcessor.js # Process/filter/group raw timetable data
 │   ├── timetableBuilder.js   # Build JSON timetable (with free periods)
-│   ├── teacherEnrichment.js  # NEW: Fallback teacher name enrichment via REST detail endpoints
+│   ├── teacherEnrichment.js  # Fallback teacher name enrichment via REST detail endpoints
 │   ├── timetableToIcal.js    # Turn JSON timetable into an .ics string
 │   └── utils.js              # Shared utility functions (dates, formatting, etc.)
 ├── icals/                    # Local output folder for generated .ics files
@@ -40,84 +40,86 @@ project-root/
     npm install
     ```
 
-3. **Configure environment**
-   Rename `.env.example` to `.env` in the project root and edit the values:
+3. **Configure environment (Multi‑Account JSON)**
+   The project now uses a single environment variable `WEBUNTIS_ACCOUNTS` containing a JSON array of account objects. Each object requires:
+
+    - `id` (used in Netlify endpoints: /ical/{id}, /json/{id})
+    - `domain` (WebUntis server short name e.g. `nete`, `neilo` — NOT the full host)
+    - `school` (school identifier passed in the query string)
+    - `username`
+    - `password`
+
+    Example `.env`:
 
     ```env
-    WEBUNTIS_DOMAIN=yourServer
-    # short server name like `Achilles` or the full host `achilles.webuntis.com`
-    WEBUNTIS_SCHOOL=YourSchoolName
-    WEBUNTIS_USERNAME=yourUsername
-    WEBUNTIS_PASSWORD=yourPassword
+    WEBUNTIS_ACCOUNTS='[
+      {"id":"eli","domain":"neilo","school":"fsb-wr-neustadt","username":"ReisneEli","password":"pw"},
+      {"id":"sam","domain":"nete","school":"htlwrn","username":"weghofer.samuel","password":"pw"}
+    ]'
     ```
 
-    If you encounter an error that the entered server does not exist, the
-    bundled server list may be outdated. Check the current servers at
-    <https://status.webuntis.com/> and feel free to submit a PR adding the new
-    server name.
+    Optional enrichment toggles:
+
+    - `TEACHER_ENRICH_DISABLE=1` – disable teacher detail enrichment
+    - `TEACHER_ENRICH_MAX=40` – cap detail requests (default 60)
+    - `TEACHER_ENRICH_VERBOSE=1` – verbose enrichment logging
+      Optional pre-supplied REST tokens (skips auto discovery if present):
+    - `WEBUNTIS_BEARER`
+    - `WEBUNTIS_TENANT_ID`
+    - `WEBUNTIS_SCHOOL_YEAR_ID`
+
+    Legacy single-account variables (`WEBUNTIS_DOMAIN`, `WEBUNTIS_SCHOOL`, `WEBUNTIS_USERNAME`, `WEBUNTIS_PASSWORD`) have been removed. Use the JSON array instead.
 
 4. **Netlify CLI**
     ```bash
     npm install -g netlify-cli
     ```
-    Required for running `netlify dev` (or `npm run dev`) to test the
-    Netlify function locally.
+    Required for running `netlify dev` (or `npm run dev`) to test the Netlify functions locally.
 
 ## Usage
 
-**Note**: WEBUNTIS_DOMAIN will be validated automatically on every run.
+**Note**: All domains in `WEBUNTIS_ACCOUNTS` are validated automatically on startup.
 
 ### 1) Local CLI (Node)
 
-Run the generator entirely locally. No Netlify CLI required.
+Generate an iCal for the first account (default account = first array entry):
 
 ```bash
 node cliGenerateIcal.js
 ```
 
-Result: `{project}/icals/school-timetable-YYYY-MM-DD.ics`
+Result: `icals/school-timetable-YYYY-MM-DD.ics`
 
-### 2) Netlify Function
+### 2) Netlify Multi-Account Functions
 
-Requires the Netlify CLI.
-Start the local dev server with either command:
+Two endpoints per account id:
 
-```bash
-netlify dev
-```
+-   `/ical/{id}` – Download iCal for that account (current + optional weeks query)
+-   `/json/{id}` – JSON export (cleaned timetable structure)
 
-or
+Query parameters:
 
-```bash
-npm run dev
-```
+-   `date=dd-MM-yyyy` (start week override; Monday auto-normalized)
+-   `weeks=1..20` (multi endpoint) / `weeks=1..40` (single combined generator)
+
+### 3) Single Combined iCal (deprecated path)
+
+`/.netlify/functions/icalHandler` still exists but now also relies on the first account in `WEBUNTIS_ACCOUNTS`.
 
 ## Test / Development Scripts
 
 Numbered helper scripts in `tests/` (run with `node tests/<file>`):
 
-1. `01-validate-env.js` – Validate required environment variables.
-2. `02-resolve-domain.js` – Resolve/verify WebUntis domain.
-3. `03-login.js` – Perform login, outputs session/person identifiers.
-4. `04-fetch-week-raw.js` – Fetch raw weekly timetable JSON (unprocessed).
-5. `05-get-timetable.js` – Full build: processed + grouped + free periods -> writes cleaned JSON to `tests/output/timetable-YYYY-MM-DD.json`.
-6. `06-process-pipeline.js` – Step‑by‑step pipeline (login → fetch → process → group → insert free periods) prints day keys + sample.
-7. `07-generate-ical.js` – Generate `.ics` file (uses cleaned timetable builder internally).
-8. `08-detail-fallback.js` – Experimental / diagnostic: enrich missing teacher names via REST detail endpoints; writes `tests/output/detail-enriched-week-YYYY-MM-DD.json`.
+1. `01-validate-env.js` – Validate `WEBUNTIS_ACCOUNTS` and domain reachability.
+2. `02-resolve-domain.js` – Resolve/verify a domain (first account's domain).
+3. `03-login.js` – Login using the first account.
+4. `04-fetch-week-raw.js` – Fetch raw weekly timetable JSON.
+5. `05-get-timetable.js` – Full build: processed + grouped + free periods → writes cleaned JSON.
+6. `06-process-pipeline.js` – (legacy style) still uses explicit env access (will be updated).
+7. `07-generate-ical.js` – Generate `.ics` (first account).
+8. `08-detail-fallback.js` – Diagnostic teacher enrichment script (still references legacy vars internally – slated for refactor if kept).
 
-Example (current week):
-
-```bash
-node tests/05-get-timetable.js
-```
-
-Specific Monday:
-
-```bash
-node tests/05-get-timetable.js 2025-09-01
-```
-
-Cleaned timetable JSON shape (written to `tests/output/`):
+## Cleaned Timetable JSON Shape
 
 ```json
 {
@@ -142,86 +144,48 @@ Cleaned timetable JSON shape (written to `tests/output/`):
 }
 ```
 
-`tests/output/` is git‑ignored (`.gitignore`) for local inspection only.
+## Automatic Teacher Name Enrichment
 
-## Automatic Teacher Name Enrichment (NEW)
+(unchanged – now keyed off chosen account credentials)
 
-Some WebUntis instances do not include teacher names in the standard weekly JSON. A fallback enrichment layer now runs automatically inside `timetableBuilder.js` after the raw periods are processed but before grouping and free-period insertion.
-
-How it works:
-
--   Detects entries with empty `teacherName`.
--   Attempts to obtain a REST Bearer token once per run (prefers session-based `/WebUntis/api/token/new`, falls back to legacy REST login endpoints).
--   Queries the REST detail endpoint (`/WebUntis/api/rest/view/v2/calendar-entry/detail`) for missing lessons (student-scoped and lesson-scoped variants) until names are resolved or a max limit is reached.
--   Caches detail responses to avoid duplicate network calls.
--   Gracefully continues if enrichment fails; original timetable stays intact.
-
-Environment toggles:
-
--   `TEACHER_ENRICH_DISABLE=1` – disable enrichment entirely.
--   `TEACHER_ENRICH_MAX=40` (default 60 in code) – cap detail requests per timetable build.
--   `TEACHER_ENRICH_VERBOSE=1` – verbose logging of enrichment attempts/errors.
--   Optional pre-supplied values (if you already have them):
-    -   `WEBUNTIS_BEARER` – skip token acquisition heuristics.
-    -   `WEBUNTIS_TENANT_ID` – forwarded as `Tenant-Id` header.
-    -   `WEBUNTIS_SCHOOL_YEAR_ID` – forwarded as `X-Webuntis-Api-School-Year-Id`.
-
-Diagnostic script (`tests/08-detail-fallback.js`) remains available for deeper debugging; it is no longer required for normal runs.
-
-Limitations:
-
--   Only teacher names are enriched (room enrichment removed due to inconsistent data exposure).
--   If the REST endpoints are blocked or changed, enrichment silently degrades.
+Environment toggles: see above under configuration.
 
 ## Recent Changes
 
-### Teacher Enrichment Integration - 12th Sep 2025
+### Multi-Account Environment Migration - 15 Sep 2025
 
--   Added `core/teacherEnrichment.js` and integrated automatic teacher name enrichment into the main timetable pipeline.
--   Single bearer acquisition per run with retry on 401 and caching of detail calls.
--   Added environment toggles (`TEACHER_ENRICH_*`).
--   Updated README with documentation and usage notes.
--   Retained diagnostic script `08-detail-fallback.js` for advanced analysis.
+-   Replaced 4 single-account env vars with unified `WEBUNTIS_ACCOUNTS` JSON array.
+-   Updated validation logic to iterate unique domains from the array.
+-   Netlify multi function consumes `/ical/{id}` & `/json/{id}` using `id` field.
+-   README / .env.example updated; legacy docs removed.
 
-### Environment Validation & Domain Improvements - 28th July 2025
+### Teacher Enrichment Integration - 12 Sep 2025
 
--   Added startup environment checks and `.env.example` for easier setup.
--   `icalHandler` validates configuration before generating calendars.
--   `domain.js` now accepts full host names and verifies connectivity.
--   `npm run dev` script runs `netlify dev` for local testing (Netlify CLI required).
--   Removed unused code and builtin dependencies; cleaned up tests.
--   Updated `.gitignore` to exclude generated `icals/` files (local testing purposes).
--   Documentation improvements across README.
+-   Added `core/teacherEnrichment.js` etc.
 
-### School Calendar Updates - 8th May 2025
+(Older change log entries retained below)
 
--   Added custom week range selection (1-40 weeks) for timetable generation
--   Implemented smart school year handling:
-    -   Automatic detection of summer break periods
-    -   Resumes from first Monday of September after summer break
-    -   School year end date set to July 7th
--   Enhanced date calculations:
-    -   Calculates remaining weeks until school year end
-    -   Caps requested weeks to remaining school weeks
-    -   Handles transitions between school years
--   Improved code organization:
-    -   Moved date-related utilities to `utils.js`
-    -   Better separation of concerns
-    -   More maintainable and reusable code structure
+### Environment Validation & Domain Improvements - 28 Jul 2025
+
+-   Startup environment checks, domain verification improvements.
+
+### School Calendar Updates - 8 May 2025
+
+-   See previous notes (remaining weeks, summer break logic, etc.).
 
 ## Netlify Deployment
 
-1. Push `main`
-2. On Netlify:
-    - New Site from Repo
-    - Build-Command: `npm run build` (or empty)
-    - Set environment variables under **Site settings → Build & deploy → Environment**:
-        - `WEBUNTIS_DOMAIN`
-        - `WEBUNTIS_SCHOOL`
-        - `WEBUNTIS_USERNAME`
-        - `WEBUNTIS_PASSWORD`
-    - Click **Deploy site** to trigger the initial build
-3. Netlify will deploy automatically on each push once the variables are set.
+1. Push `main`.
+2. In Netlify site settings add a single variable:
+    - `WEBUNTIS_ACCOUNTS` (JSON string) e.g.
+        ```
+        [
+          {"id":"eli","domain":"neilo","school":"fsb-wr-neustadt","username":"ReisneEli","password":"pw"},
+          {"id":"sam","domain":"nete","school":"htlwrn","username":"weghofer.samuel","password":"pw"}
+        ]
+        ```
+3. (Optional) Add enrichment toggles or pre-supplied tokens.
+4. Deploy – functions will validate domains on first invocation.
 
 ## License
 

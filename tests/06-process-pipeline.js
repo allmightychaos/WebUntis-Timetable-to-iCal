@@ -8,14 +8,18 @@ const {
     groupAndSortTimetable,
     insertFreePeriods,
 } = require("../core/timetableProcessor");
+const { getDefaultAccount } = require("../core/multiAccounts");
 
 (async () => {
     try {
+        const acct = getDefaultAccount();
+        if (!acct)
+            throw new Error("No default account (WEBUNTIS_ACCOUNTS empty)");
         const { sessionId, personId, personType } = await login(
-            process.env.WEBUNTIS_DOMAIN,
-            process.env.WEBUNTIS_SCHOOL,
-            process.env.WEBUNTIS_USERNAME,
-            process.env.WEBUNTIS_PASSWORD
+            acct.domain,
+            acct.school,
+            acct.username,
+            acct.password
         );
         const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
         const date = format(monday, "yyyy-MM-dd");
@@ -23,7 +27,8 @@ const {
             sessionId,
             personType,
             personId,
-            date
+            date,
+            acct.domain
         );
         if (!raw) throw new Error("No raw data");
 

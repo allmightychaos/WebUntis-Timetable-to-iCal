@@ -1,14 +1,18 @@
-// tests/03-login.js
+// tests/03-login.js (multi-account default)
 require("dotenv").config();
 const { login } = require("../core/webuntisAuth");
+const { getDefaultAccount } = require("../core/multiAccounts");
 
 (async () => {
     try {
+        const acct = getDefaultAccount();
+        if (!acct)
+            throw new Error("No default account (WEBUNTIS_ACCOUNTS empty)");
         const res = await login(
-            process.env.WEBUNTIS_DOMAIN,
-            process.env.WEBUNTIS_SCHOOL,
-            process.env.WEBUNTIS_USERNAME,
-            process.env.WEBUNTIS_PASSWORD
+            acct.domain,
+            acct.school,
+            acct.username,
+            acct.password
         );
         if (!res) throw new Error("Login returned null");
         console.log("Keys:", Object.keys(res));

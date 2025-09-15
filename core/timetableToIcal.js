@@ -2,6 +2,7 @@ const icalModule = require("ical-generator");
 const ical = icalModule.default || icalModule;
 const { format, add, startOfWeek } = require("date-fns");
 const { getTimetable } = require("./timetableBuilder");
+// validateEnvironment checks WEBUNTIS_ACCOUNTS (multi-account JSON)
 const { validateEnvironment } = require("./startup-validation");
 const {
     getNextSchoolYearStart,

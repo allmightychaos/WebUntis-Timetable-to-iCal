@@ -16,7 +16,7 @@ exports.handler = async (event) => {
     if (event.httpMethod === "OPTIONS")
         return { statusCode: 204, headers, body: "" };
     try {
-        await validateEnvironment();
+        // Removed validateEnvironment(); we validate per-account now.
         const m = (event.path || "").match(/\/(ical|json)\/([^\/]+)/i);
         if (!m)
             return {
@@ -26,9 +26,25 @@ exports.handler = async (event) => {
             };
         const mode = m[1].toLowerCase();
         const id = m[2];
-        const acc = getAccount(id);
-        if (!acc)
+        const account = getAccount(id);
+        if (!account) {
             return { statusCode: 404, headers, body: "Unknown account id" };
+        }
+
+        // Removed legacy process.env mapping.
+
+        if (
+            !account.domain ||
+            !account.school ||
+            !account.username ||
+            !account.password
+        ) {
+            return {
+                statusCode: 500,
+                headers,
+                body: "Account config incomplete",
+            };
+        }
 
         const qs = event.queryStringParameters || {};
         let startDate;
@@ -55,7 +71,7 @@ exports.handler = async (event) => {
                 "yyyy-MM-dd"
             );
             try {
-                const grouped = await getTimetable(dt, acc);
+                const grouped = await getTimetable(dt, account);
                 weekData.push({ weekStart: dt, grouped });
             } catch (e) {
                 weekData.push({ weekStart: dt, error: e.message });
@@ -64,7 +80,7 @@ exports.handler = async (event) => {
 
         if (mode === "json") {
             const out = {
-                person: acc.id,
+                person: account.id,
                 weeks: weekData.map((w) =>
                     w.grouped
                         ? {
@@ -82,7 +98,7 @@ exports.handler = async (event) => {
         }
 
         // Use normalized ical factory
-        const cal = ical({ name: `Stundenplan ${acc.id}` });
+        const cal = ical({ name: `Stundenplan ${account.id}` });
         for (const w of weekData) {
             if (!w.grouped) continue;
             const clean = buildClean(w.grouped);
@@ -121,7 +137,7 @@ exports.handler = async (event) => {
             headers: {
                 ...headers,
                 "Content-Type": "text/calendar",
-                "Content-Disposition": `attachment; filename="${acc.id}-timetable.ics"`,
+                "Content-Disposition": `attachment; filename="${account.id}-timetable.ics"`,
             },
             body: cal.toString(),
         };

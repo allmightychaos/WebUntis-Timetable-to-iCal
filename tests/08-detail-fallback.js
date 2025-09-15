@@ -18,6 +18,7 @@ const {
     groupAndSortTimetable,
     insertFreePeriods,
 } = require("../core/timetableProcessor");
+const { getDefaultAccount } = require("../core/multiAccounts");
 
 // --- Config via ENV ---
 // DETAIL_MAX (optional) – limit how many detail calls (default 40)
@@ -145,13 +146,13 @@ async function fetchDetail({
 
 (async () => {
     try {
+        const acct = getDefaultAccount();
+        if (!acct)
+            throw new Error("No default account (WEBUNTIS_ACCOUNTS empty)");
         const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
         const weekDate = format(monday, "yyyy-MM-dd");
 
-        const domain = process.env.WEBUNTIS_DOMAIN;
-        const school = process.env.WEBUNTIS_SCHOOL;
-        const username = process.env.WEBUNTIS_USERNAME;
-        const password = process.env.WEBUNTIS_PASSWORD;
+        const { domain, school, username, password } = acct;
 
         const loginRes = await login(domain, school, username, password);
         if (!loginRes) throw new Error("Login failed");
@@ -216,7 +217,8 @@ async function fetchDetail({
             sessionId,
             personType,
             personId,
-            weekDate
+            weekDate,
+            domain
         );
         if (!raw) throw new Error("Weekly fetch failed");
 

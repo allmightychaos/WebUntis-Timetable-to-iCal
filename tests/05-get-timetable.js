@@ -1,4 +1,4 @@
-// tests/06-get-timetable.js
+// tests/05-get-timetable.js (uses first account from WEBUNTIS_ACCOUNTS)
 require("dotenv").config();
 const { format, startOfWeek, parse } = require("date-fns");
 const { getTimetable } = require("../core/timetableBuilder");
