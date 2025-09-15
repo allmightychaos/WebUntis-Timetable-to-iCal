@@ -10,22 +10,16 @@ const {
     getRestBearer,
 } = require("./webuntisRestAuth");
 
-// Cache for detail responses within a single run
-const detailCache = new Map(); // key => detail object or null
-
-function buildCacheKey(entry) {
-    return [
-        entry.date,
-        entry.startTime,
-        entry.endTime,
-        entry.lessonId || entry.id,
-    ].join("|");
-}
-
-function dottedToIso(dateStr) {
-    const [d, m, y] = dateStr.split(".").map(Number);
-    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
+const detailCache = new Map(); // per-run cache
+const key = (e) =>
+    [e.date, e.startTime, e.endTime, e.lessonId || e.id].join("|");
+const dottedToIso = (d) => {
+    const [dd, mm, yy] = d.split(".").map(Number);
+    return `${yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(
+        2,
+        "0"
+    )}`;
+};
 
 async function fetchDetail({
     host,
@@ -37,49 +31,48 @@ async function fetchDetail({
     tenantId,
     schoolYearId,
 }) {
-    const cacheKey = buildCacheKey(entry);
-    if (detailCache.has(cacheKey)) return detailCache.get(cacheKey);
-
+    const k = key(entry);
+    if (detailCache.has(k)) return detailCache.get(k);
     const iso = dottedToIso(entry.date);
     const start = `${iso}T${entry.startTime}:00`;
     const end = `${iso}T${entry.endTime}:00`;
 
-    const attempts = [];
+    const queries = [];
     if (bearer) {
-        attempts.push({
-            url: `https://${host}/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${personId}&elementType=5&endDateTime=${encodeURIComponent(
-                end
-            )}&homeworkOption=DUE&startDateTime=${encodeURIComponent(start)}`,
-            label: "bearer-student",
-        });
-        attempts.push({
+        for (const t of [
+            { elementId: personId, type: 5, tag: "student" },
+            { elementId: entry.lessonId || entry.id, type: 3, tag: "lesson" },
+        ]) {
+            queries.push({
+                label: `bearer-${t.tag}`,
+                url: `https://${host}/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${
+                    t.elementId
+                }&elementType=${t.type}&endDateTime=${encodeURIComponent(
+                    end
+                )}&homeworkOption=DUE&startDateTime=${encodeURIComponent(
+                    start
+                )}`,
+            });
+        }
+    }
+    for (const t of [
+        { elementId: personId, type: 5, tag: "student" },
+        { elementId: entry.lessonId || entry.id, type: 3, tag: "lesson" },
+    ]) {
+        queries.push({
+            label: `cookie-${t.tag}`,
             url: `https://${host}/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${
-                entry.lessonId || entry.id
-            }&elementType=3&endDateTime=${encodeURIComponent(
+                t.elementId
+            }&elementType=${t.type}&endDateTime=${encodeURIComponent(
                 end
             )}&homeworkOption=DUE&startDateTime=${encodeURIComponent(start)}`,
-            label: "bearer-lesson",
         });
     }
-    attempts.push({
-        url: `https://${host}/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${personId}&elementType=5&endDateTime=${encodeURIComponent(
-            end
-        )}&homeworkOption=DUE&startDateTime=${encodeURIComponent(start)}`,
-        label: "cookie-student",
-    });
-    attempts.push({
-        url: `https://${host}/WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=${
-            entry.lessonId || entry.id
-        }&elementType=3&endDateTime=${encodeURIComponent(
-            end
-        )}&homeworkOption=DUE&startDateTime=${encodeURIComponent(start)}`,
-        label: "cookie-lesson",
-    });
 
-    for (const att of attempts) {
+    for (const q of queries) {
         try {
             const headers = { "User-Agent": "Mozilla/5.0" };
-            if (att.label.startsWith("bearer") && bearer) {
+            if (q.label.startsWith("bearer") && bearer) {
                 headers.Authorization = `Bearer ${bearer}`;
                 if (tenantId) headers["Tenant-Id"] = tenantId;
                 if (schoolYearId)
@@ -93,63 +86,60 @@ async function fetchDetail({
                 if (schoolYearId)
                     headers["X-Webuntis-Api-School-Year-Id"] = schoolYearId;
             }
-            const resp = await axios.get(att.url, {
+            const resp = await axios.get(q.url, {
                 validateStatus: () => true,
                 headers,
             });
             if (resp.status === 200 && resp.data?.calendarEntries?.length) {
                 const data = resp.data.calendarEntries[0];
-                detailCache.set(cacheKey, data);
+                detailCache.set(k, data);
                 return data;
             }
-            if (resp.status === 401 && att.label.startsWith("bearer")) {
-                // Bearer invalid -> let caller attempt refresh by returning special marker.
-                detailCache.set(cacheKey, { __unauthorized: true });
+            if (resp.status === 401 && q.label.startsWith("bearer")) {
+                detailCache.set(k, { __unauthorized: true });
                 return { __unauthorized: true };
             }
         } catch (_) {
-            // swallow; try next
+            /* ignore */
         }
     }
-    detailCache.set(cacheKey, null);
+    detailCache.set(k, null);
     return null;
 }
 
-async function obtainBearerOnce(context) {
-    if (context.bearer) return context; // already have
-    // Try token/new via session first
-    const sessToken = await getRestBearerFromSession(
-        context.domain,
-        context.school,
-        context.sessionId
+async function obtainBearerOnce(ctx) {
+    if (ctx.bearer) return ctx;
+    const sess = await getRestBearerFromSession(
+        ctx.domain,
+        ctx.school,
+        ctx.sessionId
     );
-    if (sessToken?.token) {
-        context.bearer = sessToken.token;
-        context.host = sessToken.host;
-        if (!context.schoolYearId) {
+    if (sess?.token) {
+        ctx.bearer = sess.token;
+        ctx.host = sess.host;
+        if (!ctx.schoolYearId) {
             const sy = await fetchAppConfigForYear(
-                sessToken.host,
-                context.sessionId,
-                context.school
+                sess.host,
+                ctx.sessionId,
+                ctx.school
             );
-            if (sy) context.schoolYearId = sy;
+            if (sy) ctx.schoolYearId = sy;
         }
-        return context;
+        return ctx;
     }
-    // Fallback: legacy REST login endpoints (needs credentials)
     const legacy = await getRestBearer(
-        context.domain,
-        context.school,
-        context.username,
-        context.password
+        ctx.domain,
+        ctx.school,
+        ctx.username,
+        ctx.password
     );
     if (legacy?.token) {
-        context.bearer = legacy.token;
-        context.host = legacy.host;
-        if (!context.schoolYearId && legacy.schoolYearId)
-            context.schoolYearId = legacy.schoolYearId;
+        ctx.bearer = legacy.token;
+        ctx.host = legacy.host;
+        if (!ctx.schoolYearId && legacy.schoolYearId)
+            ctx.schoolYearId = legacy.schoolYearId;
     }
-    return context;
+    return ctx;
 }
 
 async function enrichTeachers(lessons, opts) {
@@ -160,16 +150,13 @@ async function enrichTeachers(lessons, opts) {
         school,
         username,
         password,
-        tenantId: initialTenantId,
-        schoolYearId: initialSchoolYearId,
+        tenantId,
+        schoolYearId,
         maxDetails = 60,
-        verbose = false,
     } = opts;
-
     if (!lessons?.length) return { attempted: 0, enriched: 0 };
-
     const host = await resolveWebUntisHost(domain);
-    const context = {
+    const ctx = {
         bearer: process.env.WEBUNTIS_BEARER || "",
         host,
         domain,
@@ -177,46 +164,40 @@ async function enrichTeachers(lessons, opts) {
         username,
         password,
         sessionId,
-        schoolYearId:
-            initialSchoolYearId || process.env.WEBUNTIS_SCHOOL_YEAR_ID || "",
-        tenantId: initialTenantId || process.env.WEBUNTIS_TENANT_ID || "",
+        schoolYearId: schoolYearId || process.env.WEBUNTIS_SCHOOL_YEAR_ID || "",
+        tenantId: tenantId || process.env.WEBUNTIS_TENANT_ID || "",
     };
-
-    // Acquire bearer only if missing
-    if (!context.bearer) await obtainBearerOnce(context);
-
+    if (!ctx.bearer) await obtainBearerOnce(ctx);
     const targets = lessons.filter((l) => !l.teacherName);
     if (!targets.length) return { attempted: 0, enriched: 0, skipped: true };
 
-    let attempted = 0;
-    let enriched = 0;
-
+    let attempted = 0,
+        enriched = 0;
     for (const entry of targets) {
         if (attempted >= maxDetails) break;
         attempted++;
         let detail = await fetchDetail({
-            host: context.host,
-            bearer: context.bearer,
+            host: ctx.host,
+            bearer: ctx.bearer,
             personId,
             sessionId,
             school,
             entry,
-            tenantId: context.tenantId,
-            schoolYearId: context.schoolYearId,
+            tenantId: ctx.tenantId,
+            schoolYearId: ctx.schoolYearId,
         });
         if (detail && detail.__unauthorized) {
-            // refresh bearer and retry once
-            context.bearer = "";
-            await obtainBearerOnce(context);
+            ctx.bearer = "";
+            await obtainBearerOnce(ctx);
             detail = await fetchDetail({
-                host: context.host,
-                bearer: context.bearer,
+                host: ctx.host,
+                bearer: ctx.bearer,
                 personId,
                 sessionId,
                 school,
                 entry,
-                tenantId: context.tenantId,
-                schoolYearId: context.schoolYearId,
+                tenantId: ctx.tenantId,
+                schoolYearId: ctx.schoolYearId,
             });
         }
         if (detail?.teachers?.length) {
@@ -229,7 +210,6 @@ async function enrichTeachers(lessons, opts) {
             if (entry.teacherName) enriched++;
         }
     }
-
     return { attempted, enriched, totalMissing: targets.length };
 }
 

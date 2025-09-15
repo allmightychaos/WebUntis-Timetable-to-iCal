@@ -1,6 +1,4 @@
-// core/timetableBuilder.js
 const dotenv = require("dotenv").config();
-
 const { login } = require("./webuntisAuth");
 const { fetchTimetableData } = require("./webuntisFetch");
 const {
@@ -8,7 +6,7 @@ const {
     groupAndSortTimetable,
     insertFreePeriods,
 } = require("./timetableProcessor");
-const { enrichTeachers } = require("./teacherEnrichment"); // NEW: teacher enrichment
+const { enrichTeachers } = require("./teacherEnrichment");
 
 async function getTimetable(startDate) {
     const creds = [
@@ -29,7 +27,6 @@ async function getTimetable(startDate) {
     );
     if (!raw) throw new Error("Fetch failed");
 
-    // nach Typ filtern
     const elems = raw.elements;
     const filtered = {
         classes: elems.filter((e) => e.type === 1),
@@ -38,14 +35,11 @@ async function getTimetable(startDate) {
         rooms: elems.filter((e) => e.type === 4),
     };
 
-    // verarbeiten -> flache Lesson-Array
     const processed = await processTimetableData(
         raw.elementPeriods[personId],
         filtered
     );
 
-    // AUTOMATIC TEACHER ENRICHMENT
-    // Füllt fehlende Lehrer-Namen über REST Detail Endpoints, falls notwendig.
     try {
         const disable = /^(1|true|yes)$/i.test(
             process.env.TEACHER_ENRICH_DISABLE || ""
@@ -73,7 +67,6 @@ async function getTimetable(startDate) {
         }
     }
 
-    // gruppieren + sortieren + freie Zeiten einfügen
     const grouped = groupAndSortTimetable(processed);
     return insertFreePeriods(grouped);
 }

@@ -1,12 +1,7 @@
-// src/core/webuntisFetch.js
 const axios = require("axios");
 const dotenv = require("dotenv");
 const { resolveWebUntisHost } = require("./domain");
-// Load .env only when not running on Netlify
-if (!process.env.NETLIFY && !process.env.NETLIFY_DEV) {
-    dotenv.config();
-}
-
+if (!process.env.NETLIFY && !process.env.NETLIFY_DEV) dotenv.config();
 const domain = process.env.WEBUNTIS_DOMAIN;
 
 async function fetchTimetableData(sessionId, personType, personId, date) {
@@ -17,13 +12,12 @@ async function fetchTimetableData(sessionId, personType, personId, date) {
             Cookie: `JSESSIONID=${sessionId};`,
             "User-Agent": "Mozilla/5.0",
         };
-
-        const response = await axios.get(url, { headers });
-        return response.data.data.result.data; // Check that this is correct
-    } catch (error) {
+        const { data } = await axios.get(url, { headers });
+        return data.data.result.data;
+    } catch (e) {
         console.error(
             "Error fetching timetable data:",
-            error.response?.data || error.message
+            e.response?.data || e.message
         );
         return null;
     }

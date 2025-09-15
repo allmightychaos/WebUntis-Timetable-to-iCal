@@ -1,7 +1,6 @@
 const https = require("https");
 
-// Static list of known WebUntis servers. If your server is missing, please
-// check https://status.webuntis.com/ and open a PR (https://github.com/allmightychaos/WebUntis-Timetable-to-iCal/pulls) to update this list.
+// Known WebUntis server names (TitleCase)
 const WEBUNTIS_SERVERS = [
     "Achilles",
     "Ajax",
@@ -53,7 +52,6 @@ const WEBUNTIS_SERVERS = [
 
 async function resolveWebUntisHost(input) {
     if (!input) throw new Error("WEBUNTIS_DOMAIN missing");
-
     let host = input.trim();
 
     // allow protocol/full URL
@@ -64,33 +62,27 @@ async function resolveWebUntisHost(input) {
             throw new Error("Invalid server name");
         }
     }
-
-    if (host.endsWith(".webuntis.com")) {
-        host = host.replace(/\.webuntis\.com$/, "");
-    }
+    host = host.replace(/\.webuntis\.com$/i, "");
 
     // Format host to TitleCase for case-insensitive matching
-    const formattedHost =
+    const formatted =
         host.charAt(0).toUpperCase() + host.slice(1).toLowerCase();
-
-    if (!WEBUNTIS_SERVERS.includes(formattedHost)) {
+    if (!WEBUNTIS_SERVERS.includes(formatted))
         throw new Error("Entered server does not exist: " + host);
-    }
+    const full = `${formatted}.webuntis.com`;
 
-    const fullHost = `${formattedHost}.webuntis.com`;
-
-    await new Promise((resolve, reject) => {
+    await new Promise((res, rej) => {
         const req = https.request(
-            { method: "HEAD", host: fullHost, path: "/" },
-            () => resolve()
+            { method: "HEAD", host: full, path: "/" },
+            () => res()
         );
-        req.on("error", reject);
+        req.on("error", rej);
         req.end();
     }).catch(() => {
-        throw new Error("Could not connect to WebUntis server: " + fullHost);
+        throw new Error("Could not connect to WebUntis server: " + full);
     });
 
-    return fullHost;
+    return full;
 }
 
 module.exports = { resolveWebUntisHost, WEBUNTIS_SERVERS };
