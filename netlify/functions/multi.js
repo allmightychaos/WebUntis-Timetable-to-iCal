@@ -61,8 +61,8 @@ exports.handler = async (event) => {
                 startOfWeek(new Date(), { weekStartsOn: 1 }),
                 "yyyy-MM-dd"
             );
-        const weeksParam = parseInt(qs.weeks || "1", 10);
-        const weeks = weeksParam >= 1 && weeksParam <= 20 ? weeksParam : 1;
+        const weeksParam = parseInt(qs.weeks || "2", 10);
+        const weeks = weeksParam >= 1 && weeksParam <= 20 ? weeksParam : 2;
 
         const weekData = [];
         for (let i = 0; i < weeks; i++) {
