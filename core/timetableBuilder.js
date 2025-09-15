@@ -8,13 +8,20 @@ const {
 } = require("./timetableProcessor");
 const { enrichTeachers } = require("./teacherEnrichment");
 
-async function getTimetable(startDate) {
-    const creds = [
-        process.env.WEBUNTIS_DOMAIN,
-        process.env.WEBUNTIS_SCHOOL,
-        process.env.WEBUNTIS_USERNAME,
-        process.env.WEBUNTIS_PASSWORD,
-    ];
+async function getTimetable(startDate, credsOverride) {
+    const creds = credsOverride
+        ? [
+              credsOverride.domain,
+              credsOverride.school,
+              credsOverride.username,
+              credsOverride.password,
+          ]
+        : [
+              process.env.WEBUNTIS_DOMAIN,
+              process.env.WEBUNTIS_SCHOOL,
+              process.env.WEBUNTIS_USERNAME,
+              process.env.WEBUNTIS_PASSWORD,
+          ];
     const loginData = await login(...creds);
     if (!loginData) throw new Error("Login failed");
 
