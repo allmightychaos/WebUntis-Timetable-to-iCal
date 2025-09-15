@@ -2,34 +2,46 @@ const { resolveWebUntisHost } = require("./domain");
 require("dotenv").config();
 
 /**
- * Validates the essential WebUntis environment variables on application startup.
- * It checks if the domain is set, resolves it, and verifies it's a valid and reachable server.
- * If validation fails, it logs a clear error and exits the process.
+ * Startup environment validation.
+ * - Ensures WEBUNTIS_DOMAIN present
+ * - Resolves host
+ * - Retries once on transient network errors
+ * - Does NOT call process.exit (throws instead so serverless can respond)
+ * - Can be skipped by VALIDATION_SKIP=1
  */
 async function validateEnvironment() {
+    if (process.env.VALIDATION_SKIP === "1") {
+        console.log("[validation] Skipped (VALIDATION_SKIP=1).");
+        return;
+    }
+
     console.log("Performing startup environment validation...");
-    const domain = process.env.WEBUNTIS_DOMAIN;
+    const domain = (process.env.WEBUNTIS_DOMAIN || "").trim();
+    if (!domain) throw new Error("WEBUNTIS_DOMAIN is not set.");
 
-    if (!domain) {
-        console.error(
-            "❌ FATAL: WEBUNTIS_DOMAIN is not set. Please check your .env file or environment variables."
-        );
-        process.exit(1);
+    let lastErr;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const resolvedHost = await resolveWebUntisHost(domain);
+            console.log(
+                `✅ Environment validation successful (attempt ${attempt}). Using server: ${resolvedHost}`
+            );
+            return;
+        } catch (e) {
+            lastErr = e;
+            const transient =
+                /ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|socket hang up/i.test(
+                    e.message
+                );
+            console.warn(
+                `[validation] attempt ${attempt} failed: ${e.message}${
+                    attempt === 1 && transient ? " (will retry)" : ""
+                }`
+            );
+            if (!(transient && attempt === 1)) break;
+        }
     }
-
-    try {
-        const resolvedHost = await resolveWebUntisHost(domain);
-        console.log(
-            `✅ Environment validation successful. Using server: ${resolvedHost}`
-        );
-    } catch (error) {
-        console.error(
-            "❌ FATAL: Environment validation failed:",
-            error.message
-        );
-        // Exit the process because the configuration is invalid and the app cannot run.
-        process.exit(1);
-    }
+    throw new Error(`Environment validation failed: ${lastErr.message}`);
 }
 
 module.exports = { validateEnvironment };
