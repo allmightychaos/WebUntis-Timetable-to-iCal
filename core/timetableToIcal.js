@@ -52,7 +52,11 @@ async function generateIcal(
         for (const entries of Object.values(week)) {
             if (!Array.isArray(entries)) continue;
             for (const evt of entries) {
-                if (evt.cellState === "CANCEL" || evt.isFreePeriod) continue;
+                // Skip cancelled lessons in iCal to retain previous behavior
+                if (evt.cellState === "CANCEL") continue;
+                // Skip free periods as they are not lessons
+                if (evt.isFreePeriod) continue;
+
                 const [d, m, y] = evt.date.split(".").map(Number);
                 const [sh, sm] = evt.startTime.split(":").map(Number);
                 const [eh, em] = evt.endTime.split(":").map(Number);
@@ -89,4 +93,42 @@ async function generateIcal(
     return cal.toString();
 }
 
-module.exports = { generateIcal };
+function buildIcsEvents(processedDays) {
+    const events = [];
+    for (const day of processedDays) {
+        for (const lesson of day.lessons) {
+            // Skip cancelled lessons in iCal to retain previous behavior
+            if (lesson.state === "CANCEL") continue;
+            // Skip free periods as they are not lessons
+            if (lesson.isFreePeriod) continue;
+
+            const summary = [
+                lesson.subject || lesson.subject_long,
+                lesson.teacher,
+                lesson.room,
+            ]
+                .filter(Boolean)
+                .join(" · ");
+
+            const start = new Date(lesson.start);
+            const end = new Date(lesson.end);
+
+            events.push({
+                uid: `${
+                    lesson.id ||
+                    lesson.lessonId ||
+                    Math.random().toString(36).slice(2)
+                }@timetable-ical`,
+                start,
+                end,
+                summary,
+                description: lesson.periodText || "",
+                location: lesson.room || "",
+                // ...existing fields if any...
+            });
+        }
+    }
+    return events;
+}
+
+module.exports = { generateIcal, buildIcsEvents };

@@ -15,7 +15,6 @@ function buildClean(grouped) {
                     freePeriods.push({ start: e.startTime, end: e.endTime });
                     continue;
                 }
-                if (e.cellState === "CANCEL") continue;
                 lessons.push({
                     id: e.id,
                     lessonId: e.lessonId || undefined,
