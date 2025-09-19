@@ -7,6 +7,8 @@ const { buildClean } = require("../../core/cleanExport");
 const icalLib = require("ical-generator");
 const ical = icalLib.default || icalLib;
 
+const TIMEZONE = "Europe/Vienna";
+
 exports.handler = async (event) => {
     const headers = {
         "Access-Control-Allow-Origin": "*",
@@ -99,11 +101,15 @@ exports.handler = async (event) => {
 
         // Use normalized ical factory
         const cal = ical({ name: `Stundenplan ${account.id}` });
+        // Ensure calendar has a timezone for correct rendering in Apple Calendar
+        if (typeof cal.timezone === "function") cal.timezone(TIMEZONE);
         for (const w of weekData) {
             if (!w.grouped) continue;
             const clean = buildClean(w.grouped);
             for (const day of clean.days) {
                 for (const l of day.lessons) {
+                    // Skip cancelled lessons in iCal output
+                    if (l.state === "CANCEL") continue;
                     const [Y, M, D] = day.date.split("-").map(Number);
                     const [sh, sm] = l.start.split(":").map(Number);
                     const [eh, em] = l.end.split(":").map(Number);

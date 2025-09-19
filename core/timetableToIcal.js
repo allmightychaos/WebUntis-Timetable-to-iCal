@@ -26,6 +26,8 @@ async function generateIcal(
         throw new Error("Weeks parameter must be between 1 and 40");
 
     const cal = ical({ name: "Stundenplan" });
+    // Ensure calendar has a timezone (fixes Apple Calendar offset)
+    if (typeof cal.timezone === "function") cal.timezone(TIMEZONE);
     if (isSummerBreak(new Date(startDate)))
         startDate = format(
             getNextSchoolYearStart(new Date(startDate)),
@@ -82,7 +84,7 @@ async function generateIcal(
                     end: new Date(y, m - 1, d, eh, em),
                     summary,
                     description: parts.join(", "),
-                    timezone: TIMEZONE,
+                    // timezone handled at calendar level
                     color: evt.color || undefined,
                 });
                 count++;
